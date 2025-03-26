@@ -1,13 +1,82 @@
-module Pages.Home_ exposing (page)
+module Pages.Home_ exposing (Model, Msg, page)
 
-import Html
-import Html.Attributes as Attr
+import Effect exposing (Effect)
+import Html exposing (Html)
+import Layouts
+import Page exposing (Page)
+import Route exposing (Route)
+import Shared
 import View exposing (View)
 
 
-page : View msg
-page =
-    { title = "Homepage"
-    , body = [ Html.p [ Attr.class "underline font-bold text-2xl" ] [ Html.text "Hello, world!" ] 
-             ]
+page : Shared.Model -> Route () -> Page Model Msg
+page shared route =
+    Page.new
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
+        |> Page.withLayout toLayout
+
+
+toLayout : Model -> Layouts.Layout msg
+toLayout model =
+    Layouts.Scaffold { header = viewSearch model }
+
+
+
+-- INIT
+
+
+type alias Model =
+    {}
+
+
+init : () -> ( Model, Effect Msg )
+init () =
+    ( {}
+    , Effect.none
+    )
+
+
+
+-- UPDATE
+
+
+type Msg
+    = NoOp
+
+
+update : Msg -> Model -> ( Model, Effect Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model
+            , Effect.none
+            )
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- VIEW
+
+
+view : Model -> View Msg
+view model =
+    { title = "Pages.Home_"
+    , body = [ Html.text "/" ]
     }
+
+
+viewSearch : Model -> Html msg
+viewSearch model =
+    Html.text "search"

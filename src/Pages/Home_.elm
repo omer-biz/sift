@@ -8,6 +8,6 @@ import View exposing (View)
 page : View msg
 page =
     { title = "Homepage"
-    , body = [ Html.p [ Attr.class "text-green-500 underline" ] 
-         [ Html.text "Hello, world!" ] ]
+    , body = [ Html.p [ Attr.class "underline font-bold text-2xl" ] [ Html.text "Hello, world!" ] 
+             ]
     }

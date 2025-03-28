@@ -6,10 +6,13 @@ import Html.Attributes exposing (class, href, rel, target)
 import Html.Events exposing (onClick)
 import Layout exposing (Layout)
 import Route exposing (Route)
+import Route.Path as Path
 import Shared
 import SvgAssets
+import Types.Theme exposing (Theme(..))
 import Utils
 import View exposing (View)
+import Types.Theme as Theme
 
 
 type alias Props contentMsg =
@@ -20,9 +23,9 @@ type alias Props contentMsg =
 layout : Props contentMsg -> Shared.Model -> Route () -> Layout () Model Msg contentMsg
 layout props shared route =
     Layout.new
-        { init = init
+        { init = init shared.theme
         , update = update
-        , view = view props
+        , view = view route props
         , subscriptions = subscriptions
         }
 
@@ -38,12 +41,13 @@ map fn props =
 
 type alias Model =
     { sidebarOpen : Bool
+    , theme : Theme
     }
 
 
-init : () -> ( Model, Effect Msg )
-init _ =
-    ( { sidebarOpen = False }
+init : Theme -> () -> ( Model, Effect Msg )
+init theme _ =
+    ( { sidebarOpen = False, theme = theme }
     , Effect.none
     )
 
@@ -54,6 +58,7 @@ init _ =
 
 type Msg
     = ToggleNavBar
+    | SwitchTheme Theme
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -62,6 +67,11 @@ update msg model =
         ToggleNavBar ->
             ( { model | sidebarOpen = not model.sidebarOpen }
             , Effect.none
+            )
+
+        SwitchTheme theme ->
+            ( { model | theme = theme }
+            , Effect.switchTheme (Theme.toString theme)
             )
 
 
@@ -74,8 +84,8 @@ subscriptions model =
 -- VIEW
 
 
-view : Props contentMsg -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
-view props { toContentMsg, model, content } =
+view : Route () -> Props contentMsg -> { toContentMsg : Msg -> contentMsg, content : View contentMsg, model : Model } -> View contentMsg
+view route props { toContentMsg, model, content } =
     { title = content.title ++ " | Sift"
     , body =
         [ header
@@ -93,9 +103,68 @@ view props { toContentMsg, model, content } =
                 ]
             ]
         , div [ class "mx-auto px-4 flex-1" ] content.body
+        , Html.map toContentMsg <| viewSideBar model route
         , viewFooter
         ]
     }
+
+
+viewSideBar : Model -> Route () -> Html.Html Msg
+viewSideBar model route =
+    aside
+        [ class <|
+            String.join " "
+                [ "fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 dark:bg-black-500 bg-white transform transition-transform duration-300 ease-in-out z-40 shadow-xl flex flex-col justify-between"
+                , Utils.ternery model.sidebarOpen "translate-x-0" "-translate-x-full"
+                ]
+        ]
+        [ div [ class "p-4" ]
+            [ h2 [ class "text-2xl font-bold mb-4" ] []
+            , nav [ class "space-y-2" ]
+                [ a
+                    [ onClick ToggleNavBar
+                    , Path.href Path.Home_
+                    , class <|
+                        String.join " "
+                            [ "flex items-center space-x-2 px-4 py-2 text-black-500 dark:text-white-100 hover:bg-white-300 dark:hover:bg-black-600 rounded-lg transition-colors"
+                            , Utils.ternery (route.path == Path.Home_) "bg-white-200 dark:bg-black-400 shadow" ""
+                            ]
+                    ]
+                    [ SvgAssets.home "w-5 h-5", span [] [ text "Home" ] ]
+                ]
+            ]
+        , div [ class "flex flex-col p-4 space-y-4" ]
+            [ div [ class "flex justify-between items-center" ]
+                [ span [] [ text "Theme" ]
+                , viewThemeSwitch model.theme
+                ]
+            ]
+        ]
+
+
+viewThemeSwitch : Theme -> Html.Html Msg
+viewThemeSwitch theme =
+    div [ class "border rounded-lg border-sm border-gray-300  dark:border-gray-600 flex gap-x-2 items-center" ]
+        [ button
+            [ class <| isThemeActive theme Light, onClick <| SwitchTheme Light ]
+            [ SvgAssets.sun "h-6 w-6" ]
+        , button
+            [ class <| isThemeActive theme Dark, onClick <| SwitchTheme Dark ]
+            [ SvgAssets.moon "h-5 w-5" ]
+        , button
+            [ class <| isThemeActive theme System, onClick <| SwitchTheme System ]
+            [ SvgAssets.display "h-5 w-5" ]
+        ]
+
+
+isThemeActive : b -> b -> String
+isThemeActive theme curr =
+    String.join " "
+        [ Utils.ternery (theme == curr)
+            "bg-black-500 dark:bg-white-100 text-white-100 dark:text-black-500"
+            ""
+        , "rounded p-1"
+        ]
 
 
 navBarIcon : Bool -> Html.Html Msg
@@ -107,9 +176,9 @@ navBarIcon state =
 
 viewFooter : Html.Html msg
 viewFooter =
-    footer [ class "bg-white dark:bg-black-500 shadow mt-auto" ]
-        [ div [ class "mx-auto px-4 py-4 text-center text-sm text-black-500 dark:text-white" ]
-            [ p [ class "text-black-500 dark:text-white text-sm" ]
+    footer [ class "bg-white-100 dark:bg-black-500 shadow mt-auto" ]
+        [ div [ class "mx-auto px-4 py-4 text-center text-sm text-black-500 dark:text-white-100" ]
+            [ p [ class "text-black-500 dark:text-white-100 text-sm" ]
                 [ text "This project is open source. Check it out on "
                 , a
                     [ class "underline hover:text-blue-500"
@@ -120,7 +189,7 @@ viewFooter =
                     [ text "Github" ]
                 , text "."
                 ]
-            , p [ class "text-black-500 dark:text-white text-xs mt-1" ]
+            , p [ class "text-black-500 dark:text-white-100 text-xs mt-1" ]
                 [ text "Contributions are welcome!" ]
             ]
         ]

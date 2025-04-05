@@ -77,7 +77,7 @@ update msg model =
     case msg of
         SearchQuery value ->
             ( { model | searchQuery = value }
-            , Effect.none
+            , Effect.getNotes { search = value, tags = Set.toList model.selectedTags }
             )
 
         GotNotes (Ok notes) ->
@@ -101,16 +101,21 @@ update msg model =
             ( model, Effect.none )
 
         ToggleTag id ->
-            ( { model
-                | selectedTags =
+            let
+                selectedTags =
                     if Set.member id model.selectedTags then
                         Set.remove id model.selectedTags
 
                     else
                         Set.insert id model.selectedTags
+            in
+            ( { model
+                | selectedTags = selectedTags
               }
-            , Effect.none
+            , Effect.getNotes { search = model.searchQuery, tags = Set.toList selectedTags }
             )
+
+
 
 
 

@@ -21,5 +21,5 @@ decode =
         (D.field "title" D.string)
         (D.field "content" D.string)
         (D.field "tags" (D.list Tag.decode))
-        (D.field "created_at" Iso8601.decoder)
-        (D.field "updated_at" Iso8601.decoder)
+        (D.field "createdAt" Iso8601.decoder)
+        (D.field "updatedAt" Iso8601.decoder)

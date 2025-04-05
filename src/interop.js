@@ -4,7 +4,35 @@ import Dexie from "dexie";
 
 const db = new Dexie("SiftDB");
 
-function getNotes(db, search, tagIds) {}
+async function getNotes(db, search = "", tagIds = []) {
+  const cleanSearch = search.trim().toLowerCase();
+
+  let notes = await db.notes
+    .orderBy("updatedAt")
+    .reverse()
+    .filter((note) => {
+      const matchesSearch =
+        cleanSearch === "" ||
+        note.title.toLowerCase().includes(cleanSearch) ||
+        note.content.toLowerCase().includes(cleanSearch);
+
+      const matchesTags =
+        tagIds.length === 0 || tagIds.every((id) => note.tagIds.includes(id));
+
+      return matchesSearch && matchesTags;
+    })
+    .toArray();
+
+  const allTagIds = Array.from(new Set(notes.flatMap((n) => n.tagIds)));
+  const allTags = await db.tags.bulkGet(allTagIds);
+  const tagMap = new Map(allTagIds.map((id, i) => [id, allTags[i]]));
+
+  return notes.map(({ tagIds, ...note }) => ({
+    ...note,
+    tags: tagIds.map((id) => tagMap.get(id)).filter(Boolean),
+  }));
+}
+
 async function getTags(db) {
   return db.tags.toArray();
 }
@@ -45,7 +73,7 @@ export const onReady = ({ app, env }) => {
           return;
 
         case "GET_NOTES":
-          let notes = getNotes(db, data.search, data.tagIds);
+          let notes = await getNotes(db, data.search, data.tagIds);
           app.ports.receiveNotes.send(notes);
           return;
 

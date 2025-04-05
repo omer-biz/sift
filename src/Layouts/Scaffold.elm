@@ -96,12 +96,10 @@ view route props { toContentMsg, model, content } =
             ]
             [ div [ class "mx-auto h-16 px-4 py-4 flex justify-between items-center" ]
                 [ Html.map toContentMsg <| navBarIcon model.sidebarOpen
-                , div [ class "w-full flex justify-between" ]
-                    [ props.header
-                    ]
+                , div [ class "w-full flex justify-between" ] [ props.header ]
                 ]
             ]
-        , div [] content.body
+        , div [ class "md:max-w-[700px] md:mx-auto" ] content.body
         , Html.map toContentMsg <| viewSideBar model route
         , viewFooter
         ]

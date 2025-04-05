@@ -194,7 +194,7 @@ viewEditor model =
             model.note
     in
     div [ class "my-4 w-full bg-white-100 dark:bg-black-500 rounded-xl shadow-sm" ]
-        [ form [ class "grid md:max-w-[700px] md:mx-auto gap-3 min-h-[60vh]" ]
+        [ form [ class "grid md:min-w-[700px] gap-3 min-h-[60vh]" ]
             [ -- note body
               fieldset [ class "edit-mode px-4 pt-4 border-r dark:border-gray-700" ]
                 [ textarea

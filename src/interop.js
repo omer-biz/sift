@@ -4,6 +4,11 @@ import Dexie from "dexie";
 
 const db = new Dexie("SiftDB");
 
+function getNotes(db, search, tagIds) {}
+async function getTags(db) {
+  return db.tags.toArray();
+}
+
 db.version(1).stores({
   notes: "++id, title, content, createdAt, updatedAt, tagIds",
   tags: "++id, name, color",
@@ -31,12 +36,22 @@ export const flags = ({ env }) => {
 
 export const onReady = ({ app, env }) => {
   if (app.ports && app.ports.outgoing) {
-    app.ports.outgoing.subscribe(({ tag, data }) => {
+    app.ports.outgoing.subscribe(async ({ tag, data }) => {
       switch (tag) {
         case "SWITCH_THEME":
           if (data == "light" || data == "dark") localStorage.theme = data;
           else localStorage.removeItem("theme");
           toggleDarkMode();
+          return;
+
+        case "GET_NOTES":
+          let notes = getNotes(db, data.search, data.tagIds);
+          app.ports.receiveNotes.send(notes);
+          return;
+
+        case "GET_TAGS":
+          let tags = await getTags(db);
+          app.ports.receiveTags.send(tags);
           return;
 
         default:

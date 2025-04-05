@@ -8,16 +8,15 @@ export async function seed(db) {
   }
 
   const tagIds = await db.tags.bulkAdd([
-    { name: "work", color: "#4F46E5" }, // Indigo
-    { name: "personal", color: "#10B981" }, // Emerald
-    { name: "ideas", color: "#F59E0B" }, // Amber
-    { name: "health", color: "#EF4444" }, // Red
-    { name: "travel", color: "#3B82F6" }, // Blue
-    { name: "reading", color: "#8B5CF6" }, // Violet
-    { name: "journal", color: "#6B7280" }, // Gray
-    { name: "tech", color: "#0EA5E9" }, // Sky
-    { name: "finance", color: "#22C55E" }, // Green
-    { name: "random", color: "#A855F7" }, // Purple
+    { name: "work", color: "indigo" },
+    { name: "personal", color: "emerald" },
+    { name: "ideas", color: "amber" },
+    { name: "health", color: "red" },
+    { name: "travel", color: "blue" },
+    { name: "reading", color: "violet" },
+    { name: "tech", color: "sky" },
+    { name: "finance", color: "green" },
+    { name: "random", color: "purple" },
   ]);
 
   const now = new Date();

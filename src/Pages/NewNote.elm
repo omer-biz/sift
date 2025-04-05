@@ -10,6 +10,8 @@ import Route exposing (Route)
 import Shared
 import Task
 import Time exposing (Posix)
+import Types.Note as Note exposing (Note)
+import Types.Tag as Tag exposing (Tag)
 import View exposing (View)
 
 
@@ -37,19 +39,6 @@ type alias Model =
     { note : Note
     , tagQuery : String
     , tagSugg : List Tag
-    }
-
-
-type alias Tag =
-    { name : String, color : String }
-
-
-type alias Note =
-    { title : String
-    , content : String
-    , tags : List Tag
-    , createdAt : Posix
-    , updatedAt : Posix
     }
 
 
@@ -216,6 +205,7 @@ viewEditor model =
                     ]
                     []
                 ]
+
             -- tag query field
             , fieldset [ class "px-4" ]
                 [ h2 [ class "text-lg font-semibold" ]

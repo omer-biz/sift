@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , switchTheme
+    , getNotes, getTags, receiveNotes, receiveTags, switchTheme
     )
 
 {-|
@@ -234,3 +234,29 @@ switchTheme theme =
         { tag = "SWITCH_THEME"
         , data = E.string theme
         }
+
+
+getNotes : { a | search : String, tags : List Int } -> Effect msg
+getNotes options =
+    SendMessageToJavaScript
+        { tag = "GET_NOTES"
+        , data =
+            E.object
+                [ ( "search", E.string options.search )
+                , ( "tagIds", E.list E.int options.tags )
+                ]
+        }
+
+
+getTags : Effect msg
+getTags =
+    SendMessageToJavaScript
+        { tag = "GET_TAGS"
+        , data = E.null
+        }
+
+
+port receiveNotes : (E.Value -> msg) -> Sub msg
+
+
+port receiveTags : (E.Value -> msg) -> Sub msg

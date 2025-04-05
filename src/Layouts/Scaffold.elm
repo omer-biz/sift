@@ -9,10 +9,9 @@ import Route exposing (Route)
 import Route.Path as Path
 import Shared
 import SvgAssets
-import Types.Theme exposing (Theme(..))
+import Types.Theme as Theme exposing (Theme(..))
 import Utils
 import View exposing (View)
-import Types.Theme as Theme
 
 
 type alias Props contentMsg =
@@ -91,7 +90,7 @@ view route props { toContentMsg, model, content } =
         [ header
             [ class <|
                 String.join " "
-                    [ "bg-white dark:bg-black-500 shadow"
+                    [ "md:w-[900px] md:mx-auto bg-white dark:bg-black-500 shadow"
                     , Utils.ternery model.sidebarOpen "sticky top-0 z-50" ""
                     ]
             ]
@@ -102,7 +101,7 @@ view route props { toContentMsg, model, content } =
                     ]
                 ]
             ]
-        , div [ class "mx-auto px-4 flex-1" ] content.body
+        , div [] content.body
         , Html.map toContentMsg <| viewSideBar model route
         , viewFooter
         ]
@@ -114,7 +113,7 @@ viewSideBar model route =
     aside
         [ class <|
             String.join " "
-                [ "fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 dark:bg-black-500 bg-white transform transition-transform duration-300 ease-in-out z-40 shadow-xl flex flex-col justify-between"
+                [ "fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 dark:bg-black-500 bg-white-100 transform transition-transform duration-300 ease-in-out z-40 shadow-xl flex flex-col justify-between"
                 , Utils.ternery model.sidebarOpen "translate-x-0" "-translate-x-full"
                 ]
         ]

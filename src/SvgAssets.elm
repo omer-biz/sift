@@ -41,6 +41,7 @@ moon classStr =
             []
         ]
 
+
 display : String -> Html msg
 display classStr =
     svg [ viewBox "0 0 16 16", fill "currentColor", class classStr ]
@@ -53,10 +54,22 @@ display classStr =
             ]
         ]
 
+
 add : String -> Html msg
 add classStr =
     svg [ class classStr, fill "none", stroke "currentColor", viewBox "0 0 24 24" ] [ Svg.path [ strokeLinecap "round", strokeLinejoin "round", strokeWidth "2", d "M12 4v16m8-8H4" ] [] ]
 
+
 cal : String -> Html msg
 cal classStr =
     svg [ class classStr, fill "none", stroke "currentColor", viewBox "0 0 24 24" ] [ Svg.path [ strokeLinecap "round", strokeLinejoin "round", strokeWidth "2", d "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" ] [] ]
+
+
+fullStar : String -> Html msg
+fullStar classStr =
+    svg [ class classStr, fill "currentColor", viewBox "0 0 24 24", enableBackground "new 0 0 24 24" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M22,10.1c0.1-0.5-0.3-1.1-0.8-1.1l-5.7-0.8L12.9,3c-0.1-0.2-0.2-0.3-0.4-0.4C12,2.3,11.4,2.5,11.1,3L8.6,8.2L2.9,9C2.6,9,2.4,9.1,2.3,9.3c-0.4,0.4-0.4,1,0,1.4l4.1,4l-1,5.7c0,0.2,0,0.4,0.1,0.6c0.3,0.5,0.9,0.7,1.4,0.4l5.1-2.7l5.1,2.7c0.1,0.1,0.3,0.1,0.5,0.1l0,0c0.1,0,0.1,0,0.2,0c0.5-0.1,0.9-0.6,0.8-1.2l-1-5.7l4.1-4C21.9,10.5,22,10.3,22,10.1z" ] [] ] ]
+
+
+hollowStar : String -> Html msg
+hollowStar classStr =
+    svg [ class classStr, fill "currentColor", viewBox "0 0 24 24" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M22,9.67A1,1,0,0,0,21.14,9l-5.69-.83L12.9,3a1,1,0,0,0-1.8,0L8.55,8.16,2.86,9a1,1,0,0,0-.81.68,1,1,0,0,0,.25,1l4.13,4-1,5.68A1,1,0,0,0,6.9,21.44L12,18.77l5.1,2.67a.93.93,0,0,0,.46.12,1,1,0,0,0,.59-.19,1,1,0,0,0,.4-1l-1-5.68,4.13-4A1,1,0,0,0,22,9.67Zm-6.15,4a1,1,0,0,0-.29.88l.72,4.2-3.76-2a1.06,1.06,0,0,0-.94,0l-3.76,2,.72-4.2a1,1,0,0,0-.29-.88l-3-3,4.21-.61a1,1,0,0,0,.76-.55L12,5.7l1.88,3.82a1,1,0,0,0,.76.55l4.21.61Z" ] [] ] ]

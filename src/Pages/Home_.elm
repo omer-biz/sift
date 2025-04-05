@@ -44,6 +44,7 @@ type alias Model =
     , notes : List Note
     , tags : List Tag
     , selectedTags : Set Int
+    , favorites : Set String
     }
 
 
@@ -53,6 +54,7 @@ init () =
       , notes = []
       , tags = []
       , selectedTags = Set.empty
+      , favorites = Set.empty
       }
     , Effect.batch
         [ Effect.getNotes { search = "", tags = [] }
@@ -70,6 +72,7 @@ type Msg
     | GotNotes (Result D.Error (List Note))
     | GotTags (Result D.Error (List Tag))
     | ToggleTag Int
+    | ToggleFavorites
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -115,7 +118,34 @@ update msg model =
             , Effect.getNotes { search = model.searchQuery, tags = Set.toList selectedTags }
             )
 
+        ToggleFavorites ->
+            let
+                stem =
+                    genStem model
 
+                favorites =
+                    if Set.member stem model.favorites then
+                        Set.remove stem model.favorites
+
+                    else if not <| List.isEmpty model.notes then
+                        Set.insert stem model.favorites
+
+                    else
+                        model.favorites
+            in
+            ( { model | favorites = favorites }
+            , Effect.none
+            )
+
+
+genStem : { a | selectedTags : Set Int, searchQuery : String } -> String
+genStem opts =
+    opts.selectedTags
+        |> Set.toList
+        |> List.map String.fromInt
+        |> String.join ","
+        |> (++) ":"
+        |> (++) opts.searchQuery
 
 
 
@@ -136,7 +166,7 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.Home_"
+    { title = "Home"
     , body =
         [ viewBody model
         , viewFAB
@@ -231,13 +261,27 @@ viewFAB =
 
 viewSearch : Model -> Html Msg
 viewSearch model =
-    div [ class "flex-1 max-w-2xl mx-4" ]
+    let
+        stem =
+            genStem model
+
+        isOn =
+            Set.member stem model.favorites
+    in
+    div [ class "flex w-full max-w-md ml-4 gap-x-4" ]
         [ input
             [ type_ "search"
             , placeholder "Search notes..."
-            , class "w-full px-4 py-1 rounded-lg border border-black-300 dark:border-black-700 focus:outline-none focus:ring-1 focus:ring-pink-500 dark:focus:ring-pink-300 bg-white-100 dark:bg-black-500"
+            , class "flex-grow px-4 py-1 rounded-lg border border-black-300 dark:border-black-700 focus:outline-none focus:ring-1 focus:ring-pink-500 dark:focus:ring-pink-300 bg-white-100 dark:bg-black-500"
             , onInput SearchQuery
             , value model.searchQuery
             ]
             []
+        , button [ onClick ToggleFavorites ]
+            [ if isOn then
+                SvgAssets.fullStar "w-10 h-10"
+
+              else
+                SvgAssets.hollowStar "w-10 h-10 dark:text-white-100"
+            ]
         ]

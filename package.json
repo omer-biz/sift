@@ -23,5 +23,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "elm-land server",
     "build": "elm-land build"
+  },
+  "dependencies": {
+    "dexie": "^4.0.11"
   }
 }

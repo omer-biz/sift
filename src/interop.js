@@ -58,7 +58,7 @@ export const flags = ({ env }) => {
 
   return {
     theme: localStorage.theme || null,
-    status: window.navigator.onLine,
+    favorites: JSON.parse(localStorage.favorites) || [],
   };
 };
 
@@ -80,6 +80,11 @@ export const onReady = ({ app, env }) => {
         case "GET_TAGS":
           let tags = await getTags(db);
           app.ports.receiveTags.send(tags);
+          return;
+
+        case "SAVE_FAVORITES":
+          console.log(JSON.stringify(data));
+          localStorage.favorites = JSON.stringify(data);
           return;
 
         default:

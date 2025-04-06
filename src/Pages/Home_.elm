@@ -5,6 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as D
+import Json.Encode as E
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -22,7 +23,7 @@ import View exposing (View)
 page : Shared.Model -> Route () -> Page Model Msg
 page shared route =
     Page.new
-        { init = init
+        { init = init shared.favorites
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -48,13 +49,13 @@ type alias Model =
     }
 
 
-init : () -> ( Model, Effect Msg )
-init () =
+init : Set String -> () -> ( Model, Effect Msg )
+init favorites () =
     ( { searchQuery = ""
       , notes = []
       , tags = []
       , selectedTags = Set.empty
-      , favorites = Set.empty
+      , favorites = favorites
       }
     , Effect.batch
         [ Effect.getNotes { search = "", tags = [] }
@@ -121,7 +122,7 @@ update msg model =
         ToggleFavorites ->
             let
                 stem =
-                    genStem model
+                    toString model
 
                 favorites =
                     if Set.member stem model.favorites then
@@ -134,18 +135,17 @@ update msg model =
                         model.favorites
             in
             ( { model | favorites = favorites }
-            , Effect.none
+            , Effect.saveFavorites <| Set.toList favorites
             )
 
 
-genStem : { a | selectedTags : Set Int, searchQuery : String } -> String
-genStem opts =
-    opts.selectedTags
-        |> Set.toList
-        |> List.map String.fromInt
-        |> String.join ","
-        |> (++) ":"
-        |> (++) opts.searchQuery
+toString : { a | selectedTags : Set Int, searchQuery : String } -> String
+toString opts =
+    E.object
+        [ ( "selectedTags", E.list E.int <| Set.toList opts.selectedTags )
+        , ( "searchQuery", E.string opts.searchQuery )
+        ]
+        |> E.encode 0
 
 
 
@@ -263,7 +263,7 @@ viewSearch : Model -> Html Msg
 viewSearch model =
     let
         stem =
-            genStem model
+            toString model
 
         isOn =
             Set.member stem model.favorites

@@ -1,6 +1,8 @@
 module Shared.Model exposing (Model)
 
 {-| -}
+
+import Set exposing (Set)
 import Types.Theme exposing (Theme)
 
 
@@ -12,4 +14,6 @@ own file, so they can be imported by `Effect.elm`
 
 -}
 type alias Model =
-    { theme : Theme }
+    { theme : Theme
+    , favorites : Set String
+    }

@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , getNotes, getTags, receiveNotes, receiveTags, switchTheme
+    , getNotes, getTags, receiveNotes, receiveTags, saveFavorites, switchTheme
     )
 
 {-|
@@ -27,7 +27,7 @@ port module Effect exposing
 import Browser.Navigation
 import Dict exposing (Dict)
 import Json.Encode as E
-import Route exposing (Route)
+import Route
 import Route.Path
 import Shared.Model
 import Shared.Msg
@@ -253,6 +253,14 @@ getTags =
     SendMessageToJavaScript
         { tag = "GET_TAGS"
         , data = E.null
+        }
+
+
+saveFavorites : List String -> Effect msg
+saveFavorites favs =
+    SendMessageToJavaScript
+        { tag = "SAVE_FAVORITES"
+        , data = E.list E.string favs
         }
 
 

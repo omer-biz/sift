@@ -15,7 +15,7 @@ module Shared exposing
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
-import Route.Path
+import Set exposing (Set)
 import Shared.Model
 import Shared.Msg
 import Types.Theme as Theme
@@ -26,13 +26,19 @@ import Types.Theme as Theme
 
 
 type alias Flags =
-    { theme : Maybe String }
+    { theme : Maybe String
+    , favorites : Set String
+    }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.map Flags
-        (Json.Decode.field "theme" (Json.Decode.maybe Json.Decode.string))
+    Json.Decode.map2 Flags
+        (Json.Decode.field "theme" <| Json.Decode.maybe Json.Decode.string)
+        (Json.Decode.string
+            |> Json.Decode.list
+            |> Json.Decode.map Set.fromList
+            |> Json.Decode.field "favorites")
 
 
 
@@ -45,19 +51,19 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
-    let
-        theme =
-            case flagsResult of
-                Ok flags ->
-                    Theme.fromMaybeString flags.theme
+    case flagsResult of
+        Ok flags ->
+            ( { theme = Theme.fromMaybeString flags.theme
+              , favorites = flags.favorites
+              }
+            , Effect.none
+            )
 
-                Err _ ->
-                    -- TODO: log the error
-                    Theme.System
-    in
-    ( { theme = theme}
-    , Effect.none
-    )
+        Err _ ->
+            -- TODO: log the error
+            ( { theme = Theme.System, favorites = Set.empty }
+            , Effect.none
+            )
 
 
 

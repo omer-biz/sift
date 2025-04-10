@@ -6,8 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createPin, getNotes, getPins, getTags, recNotes, removePin, savePins, sendSharedMsg, switchTheme
-    , recPin, recPins, recTags
+    , createPin, getNotes, getPins, getTags, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme
     )
 
 {-|
@@ -285,7 +284,10 @@ createPin pin =
 
 removePin : Int -> Effect msg
 removePin id =
-    Debug.todo "remove pin"
+    SendMessageToJavaScript
+        { tag = "DELETE_PIN"
+        , data = E.int id
+        }
 
 
 port recNotes : (E.Value -> msg) -> Sub msg

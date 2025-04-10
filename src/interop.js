@@ -50,6 +50,10 @@ async function createPin(db, pinForm) {
   return { ...pin, tags: tags };
 }
 
+async function deletePin(db, pinId) {
+  return db.pins.delete(pinId);
+}
+
 db.version(1).stores({
   notes: "++id, title, content, createdAt, updatedAt, tagIds",
   tags: "++id, name, color",
@@ -104,6 +108,10 @@ export const onReady = ({ app, env }) => {
         case "CREATE_PIN":
           let pin = await createPin(db, data);
           app.ports.recPin.send(pin);
+          return;
+
+        case "DELETE_PIN":
+          let _ = await deletePin(db, data);
           return;
 
         case "SAVE_FAVORITES":

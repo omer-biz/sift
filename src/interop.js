@@ -38,7 +38,15 @@ async function getTags(db) {
 }
 
 async function getPins(db) {
-  return db.pins.toArray();
+  let pins = await db.pins.toArray();
+
+  return Promise.all(
+    pins.map(async (pin) => {
+      let tags = await db.tags.bulkGet(pin.tagIds);
+
+      return { ...pin, tags: tags };
+    }),
+  );
 }
 
 async function createPin(db, pinForm) {
@@ -101,8 +109,8 @@ export const onReady = ({ app, env }) => {
           return;
 
         case "GET_PINS":
-          // let pins = await getPins(db);
-          // app.ports.recPins.send(pins);
+          let pins = await getPins(db);
+          app.ports.recPins.send(pins);
           return;
 
         case "CREATE_PIN":
@@ -115,7 +123,6 @@ export const onReady = ({ app, env }) => {
           return;
 
         case "SAVE_FAVORITES":
-          console.log(JSON.stringify(data));
           localStorage.favorites = JSON.stringify(data);
           return;
 

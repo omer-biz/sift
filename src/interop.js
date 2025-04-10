@@ -37,9 +37,23 @@ async function getTags(db) {
   return db.tags.toArray();
 }
 
+async function getPins(db) {
+  return db.pins.toArray();
+}
+
+async function createPin(db, pinForm) {
+  let pinId = await db.pins.add(pinForm);
+
+  let pin = await db.pins.get(pinId);
+  let tags = await db.tags.bulkGet(pin.tagIds);
+
+  return { ...pin, tags: tags };
+}
+
 db.version(1).stores({
   notes: "++id, title, content, createdAt, updatedAt, tagIds",
   tags: "++id, name, color",
+  pins: "++id, tagIds, searchQuery, noteCount",
 });
 
 let preferDarkMode = () =>
@@ -58,7 +72,7 @@ export const flags = ({ env }) => {
 
   return {
     theme: localStorage.theme || null,
-    favorites: JSON.parse(localStorage.favorites) || [],
+    favorites: JSON.parse(localStorage.favorites || "[]"),
   };
 };
 
@@ -74,12 +88,22 @@ export const onReady = ({ app, env }) => {
 
         case "GET_NOTES":
           let notes = await getNotes(db, data.search, data.tagIds);
-          app.ports.receiveNotes.send(notes);
+          app.ports.recNotes.send(notes);
           return;
 
         case "GET_TAGS":
           let tags = await getTags(db);
-          app.ports.receiveTags.send(tags);
+          app.ports.recTags.send(tags);
+          return;
+
+        case "GET_PINS":
+          // let pins = await getPins(db);
+          // app.ports.recPins.send(pins);
+          return;
+
+        case "CREATE_PIN":
+          let pin = await createPin(db, data);
+          app.ports.recPin.send(pin);
           return;
 
         case "SAVE_FAVORITES":

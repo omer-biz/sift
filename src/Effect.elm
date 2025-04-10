@@ -6,7 +6,8 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , getNotes, getTags, receiveNotes, receiveTags, saveFavorites, switchTheme
+    , createPin, getNotes, getPins, getTags, recNotes, removePin, savePins, sendSharedMsg, switchTheme
+    , recPin, recPins, recTags
     )
 
 {-|
@@ -26,12 +27,14 @@ port module Effect exposing
 
 import Browser.Navigation
 import Dict exposing (Dict)
+import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
 import Route
 import Route.Path
 import Shared.Model
 import Shared.Msg
 import Task
+import Types.Pin as Pin exposing (Pin)
 import Url exposing (Url)
 
 
@@ -256,15 +259,42 @@ getTags =
         }
 
 
-saveFavorites : List String -> Effect msg
-saveFavorites favs =
+savePins : List Pin -> Effect msg
+savePins pins =
     SendMessageToJavaScript
-        { tag = "SAVE_FAVORITES"
-        , data = E.list E.string favs
+        { tag = "SAVE_PINS"
+        , data = E.list Pin.encode pins
         }
 
 
-port receiveNotes : (E.Value -> msg) -> Sub msg
+getPins : Effect msg
+getPins =
+    SendMessageToJavaScript
+        { tag = "GET_PINS"
+        , data = E.null
+        }
 
 
-port receiveTags : (E.Value -> msg) -> Sub msg
+createPin : Pin.Form -> Effect msg
+createPin pin =
+    SendMessageToJavaScript
+        { tag = "CREATE_PIN"
+        , data = Pin.encode pin
+        }
+
+
+removePin : Int -> Effect msg
+removePin id =
+    Debug.todo "remove pin"
+
+
+port recNotes : (E.Value -> msg) -> Sub msg
+
+
+port recTags : (E.Value -> msg) -> Sub msg
+
+
+port recPins : (E.Value -> msg) -> Sub msg
+
+
+port recPin : (E.Value -> msg) -> Sub msg

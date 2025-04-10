@@ -73,3 +73,18 @@ fullStar classStr =
 hollowStar : String -> Html msg
 hollowStar classStr =
     svg [ class classStr, fill "currentColor", viewBox "0 0 24 24" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M22,9.67A1,1,0,0,0,21.14,9l-5.69-.83L12.9,3a1,1,0,0,0-1.8,0L8.55,8.16,2.86,9a1,1,0,0,0-.81.68,1,1,0,0,0,.25,1l4.13,4-1,5.68A1,1,0,0,0,6.9,21.44L12,18.77l5.1,2.67a.93.93,0,0,0,.46.12,1,1,0,0,0,.59-.19,1,1,0,0,0,.4-1l-1-5.68,4.13-4A1,1,0,0,0,22,9.67Zm-6.15,4a1,1,0,0,0-.29.88l.72,4.2-3.76-2a1.06,1.06,0,0,0-.94,0l-3.76,2,.72-4.2a1,1,0,0,0-.29-.88l-3-3,4.21-.61a1,1,0,0,0,.76-.55L12,5.7l1.88,3.82a1,1,0,0,0,.76.55l4.21.61Z" ] [] ] ]
+
+
+delete : String -> Html msg
+delete classStr =
+    svg [ class classStr, viewBox "0 0 24 24", fill "currentColor" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M10 12V17", stroke "#000000", strokeWidth "2", strokeLinecap "round", strokeLinejoin "round" ] [], Svg.path [ d "M14 12V17", stroke "#000000", strokeWidth "2", strokeLinecap "round", strokeLinejoin "round" ] [], Svg.path [ d "M4 7H20", stroke "#000000", strokeWidth "2", strokeLinecap "round", strokeLinejoin "round" ] [], Svg.path [ d "M6 10V18C6 19.6569 7.34315 21 9 21H15C16.6569 21 18 19.6569 18 18V10", stroke "#000000", strokeWidth "2", strokeLinecap "round", strokeLinejoin "round" ] [], Svg.path [ d "M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z", stroke "#000000", strokeWidth "2", strokeLinecap "round", strokeLinejoin "round" ] [] ] ]
+
+
+pinhollow : String -> Html msg
+pinhollow classStr =
+    svg [ class classStr, fill "currentColor", viewBox "-2.5 -2.5 24 24", preserveAspectRatio "xMinYMin", class "jam jam-pin" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M12.626 11.346l-.184-1.036 4.49-4.491-2.851-2.852-4.492 4.49-1.035-.184a5.05 5.05 0 0 0-2.734.269l6.538 6.537a5.05 5.05 0 0 0 .268-2.733zm-4.25 1.604L2.67 18.654a1.008 1.008 0 0 1-1.426-1.426l5.705-5.704L2.67 7.245a7.051 7.051 0 0 1 6.236-1.958l3.747-3.747a2.017 2.017 0 0 1 2.853 0l2.852 2.853a2.017 2.017 0 0 1 0 2.852l-3.747 3.747a7.051 7.051 0 0 1-1.958 6.236L8.376 12.95z" ] [] ] ]
+
+
+pinFilled : String -> Html msg
+pinFilled classStr =
+    svg [ class classStr, fill "currentColor", viewBox "-3 -2.5 24 24", preserveAspectRatio "xMinYMin", class "jam jam-pin-f" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M7.374 12.268l-5.656 5.657A1 1 0 1 1 .303 16.51l5.657-5.656L1.718 6.61A6.992 6.992 0 0 1 7.9 4.67L11.617.954a2 2 0 0 1 2.828 0l2.829 2.828a2 2 0 0 1 0 2.829l-3.716 3.716a6.992 6.992 0 0 1-1.941 6.183l-4.243-4.242z" ] [] ] ]

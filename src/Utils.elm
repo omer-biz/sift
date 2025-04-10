@@ -1,5 +1,6 @@
-module Utils exposing (ternery, formatDate)
+module Utils exposing (formatDate, receieve, tagIdsStr, ternery)
 
+import Json.Decode as D exposing (Decoder)
 import Time
 
 
@@ -63,3 +64,16 @@ formatDate zone posix =
             Time.toYear zone posix |> String.fromInt
     in
     month ++ " " ++ day ++ ", " ++ year
+
+
+tagIdsStr : List Int -> String
+tagIdsStr ids =
+    ids
+        |> List.map String.fromInt
+        |> String.join ","
+
+
+receieve : Decoder a
+         -> (Result D.Error a -> msg) -> ((D.Value -> msg) -> Sub msg) -> Sub msg
+receieve decoder toMsg effect =
+    effect (\value -> D.decodeValue decoder value |> toMsg)

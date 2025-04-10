@@ -108,6 +108,18 @@ view route props { toContentMsg, model, content } =
 
 viewSideBar : Model -> Route () -> Html.Html Msg
 viewSideBar model route =
+    let
+        navItem path_ =
+            a
+                [ onClick ToggleNavBar
+                , Path.href path_
+                , class <|
+                    String.join " "
+                        [ "flex items-center space-x-2 px-4 py-2 text-black-500 dark:text-white-100 hover:bg-white-300 dark:hover:bg-black-600 rounded-lg transition-colors"
+                        , Utils.ternery (route.path == path_) "bg-white-200 dark:bg-black-400 shadow" ""
+                        ]
+                ]
+    in
     aside
         [ class <|
             String.join " "
@@ -118,16 +130,8 @@ viewSideBar model route =
         [ div [ class "p-4" ]
             [ h2 [ class "text-2xl font-bold mb-4" ] []
             , nav [ class "space-y-2" ]
-                [ a
-                    [ onClick ToggleNavBar
-                    , Path.href Path.Home_
-                    , class <|
-                        String.join " "
-                            [ "flex items-center space-x-2 px-4 py-2 text-black-500 dark:text-white-100 hover:bg-white-300 dark:hover:bg-black-600 rounded-lg transition-colors"
-                            , Utils.ternery (route.path == Path.Home_) "bg-white-200 dark:bg-black-400 shadow" ""
-                            ]
-                    ]
-                    [ SvgAssets.home "w-5 h-5", span [] [ text "Home" ] ]
+                [ navItem Path.Home_ <| [ SvgAssets.home "w-5 h-5", span [] [ text "Home" ] ]
+                , navItem Path.Pinned <| [ SvgAssets.pinhollow "w-5 h-5", span [] [ text "Pinned" ] ]
                 ]
             ]
         , div [ class "flex flex-col p-4 space-y-4" ]

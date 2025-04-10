@@ -1,10 +1,11 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as D
+import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
 import Layouts
 import Page exposing (Page)
@@ -15,6 +16,7 @@ import Shared
 import SvgAssets
 import Time
 import Types.Note as Note exposing (Note)
+import Types.Pin as Pin exposing (Pin)
 import Types.Tag as Tag exposing (Tag)
 import Utils
 import View exposing (View)
@@ -23,7 +25,7 @@ import View exposing (View)
 page : Shared.Model -> Route () -> Page Model Msg
 page shared route =
     Page.new
-        { init = init shared.favorites
+        { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -45,21 +47,22 @@ type alias Model =
     , notes : List Note
     , tags : List Tag
     , selectedTags : Set Int
-    , favorites : Set String
+    , pins : Dict String Pin
     }
 
 
-init : Set String -> () -> ( Model, Effect Msg )
-init favorites () =
+init : () -> ( Model, Effect Msg )
+init () =
     ( { searchQuery = ""
       , notes = []
       , tags = []
       , selectedTags = Set.empty
-      , favorites = favorites
+      , pins = Dict.empty
       }
     , Effect.batch
         [ Effect.getNotes { search = "", tags = [] }
         , Effect.getTags
+        , Effect.getPins
         ]
     )
 
@@ -72,8 +75,10 @@ type Msg
     = SearchQuery String
     | GotNotes (Result D.Error (List Note))
     | GotTags (Result D.Error (List Tag))
+    | GotPins (Result D.Error (List Pin))
+    | GotPin (Result D.Error Pin)
     | ToggleTag Int
-    | ToggleFavorites
+    | TogglePins
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -94,6 +99,20 @@ update msg model =
             in
             ( model, Effect.none )
 
+        GotPin (Ok pin) ->
+            let
+                pinKey =
+                    pin.searchQuery ++ ":" ++ Utils.tagIdsStr pin.tagIds
+            in
+            ( { model | pins = Dict.insert pinKey pin model.pins }, Effect.none )
+
+        GotPin (Err err) ->
+            let
+                _ =
+                    Debug.log "decode pin error: " err
+            in
+            ( model, Effect.none )
+
         GotTags (Ok tags) ->
             ( { model | tags = tags }, Effect.none )
 
@@ -101,6 +120,27 @@ update msg model =
             let
                 _ =
                     Debug.log "decode tags error: " err
+            in
+            ( model, Effect.none )
+
+        GotPins (Ok pins) ->
+            let
+                dictPins =
+                    pins
+                        |> List.map
+                            (\pin ->
+                                ( pin.searchQuery ++ ":" ++ Utils.tagIdsStr pin.tagIds
+                                , pin
+                                )
+                            )
+                        |> Dict.fromList
+            in
+            ( { model | pins = dictPins }, Effect.none )
+
+        GotPins (Err err) ->
+            let
+                _ =
+                    Debug.log "decode pins error: " err
             in
             ( model, Effect.none )
 
@@ -119,24 +159,26 @@ update msg model =
             , Effect.getNotes { search = model.searchQuery, tags = Set.toList selectedTags }
             )
 
-        ToggleFavorites ->
+        TogglePins ->
             let
-                stem =
-                    toString model
+                selectedTags =
+                    Set.toList model.selectedTags
 
-                favorites =
-                    if Set.member stem model.favorites then
-                        Set.remove stem model.favorites
-
-                    else if not <| List.isEmpty model.notes then
-                        Set.insert stem model.favorites
-
-                    else
-                        model.favorites
+                query =
+                    model.searchQuery ++ ":" ++ Utils.tagIdsStr selectedTags
             in
-            ( { model | favorites = favorites }
-            , Effect.saveFavorites <| Set.toList favorites
-            )
+            case Dict.get query model.pins of
+                Just pin ->
+                    ( { model | pins = Dict.remove query model.pins }, Effect.removePin pin.id )
+
+                Nothing ->
+                    ( model
+                    , Effect.createPin
+                        { tagIds = selectedTags
+                        , searchQuery = model.searchQuery
+                        , noteCount = List.length model.notes
+                        }
+                    )
 
 
 toString : { a | selectedTags : Set Int, searchQuery : String } -> String
@@ -153,10 +195,12 @@ toString opts =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
+subscriptions _ =
     Sub.batch
-        [ Effect.receiveNotes (\value -> D.decodeValue (D.list Note.decode) value |> GotNotes)
-        , Effect.receiveTags (\value -> D.decodeValue (D.list Tag.decode) value |> GotTags)
+        [ Utils.receieve (D.list Note.decode) GotNotes Effect.recNotes
+        , Utils.receieve (D.list Tag.decode) GotTags Effect.recTags
+        , Utils.receieve (D.list Pin.decode) GotPins Effect.recPins
+        , Utils.receieve Pin.decode GotPin Effect.recPin
         ]
 
 
@@ -263,10 +307,10 @@ viewSearch : Model -> Html Msg
 viewSearch model =
     let
         stem =
-            toString model
+            model.searchQuery ++ ":" ++ Utils.tagIdsStr (Set.toList model.selectedTags)
 
         isOn =
-            Set.member stem model.favorites
+            Dict.member stem model.pins
     in
     div [ class "flex w-full max-w-md ml-4 gap-x-4" ]
         [ input
@@ -277,11 +321,11 @@ viewSearch model =
             , value model.searchQuery
             ]
             []
-        , button [ onClick ToggleFavorites ]
+        , button [ onClick TogglePins ]
             [ if isOn then
-                SvgAssets.fullStar "w-10 h-10"
+                SvgAssets.pinFilled "w-10 h-10"
 
               else
-                SvgAssets.hollowStar "w-10 h-10 dark:text-white-100"
+                SvgAssets.pinhollow "w-10 h-10 dark:text-white-100"
             ]
         ]

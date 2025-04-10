@@ -15,5 +15,5 @@ own file, so they can be imported by `Effect.elm`
 -}
 type alias Model =
     { theme : Theme
-    , favorites : Set String
+    , pinFilter : Maybe { selectedTags : List Int, searchQuery : String }
     }

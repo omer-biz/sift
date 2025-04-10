@@ -230,6 +230,11 @@ toCmd options effect =
 port outgoing : { tag : String, data : E.Value } -> Cmd msg
 
 
+sendSharedMsg : Shared.Msg.Msg -> Effect msg
+sendSharedMsg msg =
+    SendSharedMsg msg
+
+
 switchTheme : String -> Effect msg
 switchTheme theme =
     SendMessageToJavaScript

@@ -13,6 +13,7 @@ import Route exposing (Route)
 import Route.Path as Path exposing (Path)
 import Set exposing (Set)
 import Shared
+import Shared.Msg
 import SvgAssets
 import Time
 import Types.Note as Note exposing (Note)
@@ -25,7 +26,7 @@ import View exposing (View)
 page : Shared.Model -> Route () -> Page Model Msg
 page shared route =
     Page.new
-        { init = init
+        { init = init shared.pinFilter
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -51,18 +52,31 @@ type alias Model =
     }
 
 
-init : () -> ( Model, Effect Msg )
-init () =
-    ( { searchQuery = ""
+init :
+    Maybe { selectedTags : List Int, searchQuery : String }
+    -> ()
+    -> ( Model, Effect Msg )
+init pinFilter () =
+    let
+        ( searchQuery, selectedTags ) =
+            case pinFilter of
+                Just filter ->
+                    ( filter.searchQuery, filter.selectedTags )
+
+                Nothing ->
+                    ( "", [] )
+    in
+    ( { searchQuery = searchQuery
       , notes = []
       , tags = []
-      , selectedTags = Set.empty
+      , selectedTags = Set.fromList selectedTags
       , pins = Dict.empty
       }
     , Effect.batch
-        [ Effect.getNotes { search = "", tags = [] }
+        [ Effect.getNotes { search = searchQuery, tags = selectedTags }
         , Effect.getTags
         , Effect.getPins
+        , Effect.sendSharedMsg Shared.Msg.ResetFilter
         ]
     )
 
@@ -179,16 +193,6 @@ update msg model =
                         , noteCount = List.length model.notes
                         }
                     )
-
-
-toString : { a | selectedTags : Set Int, searchQuery : String } -> String
-toString opts =
-    E.object
-        [ ( "selectedTags", E.list E.int <| Set.toList opts.selectedTags )
-        , ( "searchQuery", E.string opts.searchQuery )
-        ]
-        |> E.encode 0
-
 
 
 -- SUBSCRIPTIONS

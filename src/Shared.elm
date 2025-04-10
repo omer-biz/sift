@@ -15,6 +15,7 @@ module Shared exposing
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
+import Route.Path as Path
 import Set exposing (Set)
 import Shared.Model
 import Shared.Msg
@@ -27,18 +28,13 @@ import Types.Theme as Theme
 
 type alias Flags =
     { theme : Maybe String
-    , favorites : Set String
     }
 
 
 decoder : Json.Decode.Decoder Flags
 decoder =
-    Json.Decode.map2 Flags
+    Json.Decode.map Flags
         (Json.Decode.field "theme" <| Json.Decode.maybe Json.Decode.string)
-        (Json.Decode.string
-            |> Json.Decode.list
-            |> Json.Decode.map Set.fromList
-            |> Json.Decode.field "favorites")
 
 
 
@@ -51,19 +47,16 @@ type alias Model =
 
 init : Result Json.Decode.Error Flags -> Route () -> ( Model, Effect Msg )
 init flagsResult route =
-    case flagsResult of
-        Ok flags ->
-            ( { theme = Theme.fromMaybeString flags.theme
-              , favorites = flags.favorites
-              }
-            , Effect.none
-            )
+    let
+        theme =
+            case flagsResult of
+                Ok flags ->
+                    Theme.fromMaybeString flags.theme
 
-        Err _ ->
-            -- TODO: log the error
-            ( { theme = Theme.System, favorites = Set.empty }
-            , Effect.none
-            )
+                Err _ ->
+                    Theme.System
+    in
+    ( { theme = theme, pinFilter = Nothing }, Effect.none )
 
 
 
@@ -81,6 +74,14 @@ update route msg model =
             ( model
             , Effect.none
             )
+
+        Shared.Msg.SelectPin pinFilter ->
+            ( { model | pinFilter = Just pinFilter }
+            , Effect.pushRoutePath Path.Home_
+            )
+
+        Shared.Msg.ResetFilter ->
+            ( { model | pinFilter = Nothing }, Effect.none )
 
 
 

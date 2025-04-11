@@ -15,6 +15,7 @@ import SvgAssets
 import Types.Pin as Pin exposing (Pin)
 import Utils
 import View exposing (View)
+import Types.Tag as Tag
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -119,19 +120,6 @@ view model =
 viewPins : List Pin -> Html Msg
 viewPins pins =
     let
-        styleTag color =
-            "border-" ++ color ++ "-400 bg-" ++ color ++ "-400 text-white-100"
-
-        viewTag tag =
-            span
-                [ String.join " "
-                    [ "text-xs px-2 py-[3px] rounded-md"
-                    , styleTag tag.color
-                    ]
-                    |> class
-                ]
-                [ text <| "#" ++ tag.name ]
-
         viewFavorite pin =
             article
                 [ class "pointer:cursor bg-white-200 dark:bg-black-400 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow items-start justify-between relative border border-1 border-black-200 flex items-center"
@@ -140,7 +128,7 @@ viewPins pins =
                 [ div []
                     [ h2 [] [ span [ class "font-bold underline" ] [ text <| "'" ++ pin.searchQuery ++ "'" ] ]
                     , div [ class "mt-2 text-sm flex flex-wrap gap-2" ] <|
-                        List.map viewTag pin.tags
+                        List.map Tag.view pin.tags
                     ]
                 , span [ class "flex items-center text-xl gap-x-2" ]
                     [ text <| String.fromInt pin.noteCount

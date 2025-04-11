@@ -255,11 +255,11 @@ getNotes options =
         }
 
 
-getTags : Effect msg
-getTags =
+getTags : String -> Effect msg
+getTags query =
     SendMessageToJavaScript
         { tag = "GET_TAGS"
-        , data = E.null
+        , data = E.string query
         }
 
 

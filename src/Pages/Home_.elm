@@ -5,12 +5,11 @@ import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
-import Json.Decode as D exposing (Decoder)
-import Json.Encode as E
+import Json.Decode as D
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
-import Route.Path as Path exposing (Path)
+import Route.Path as Path
 import Set exposing (Set)
 import Shared
 import Shared.Msg
@@ -74,7 +73,7 @@ init pinFilter () =
       }
     , Effect.batch
         [ Effect.getNotes { search = searchQuery, tags = selectedTags }
-        , Effect.getTags
+        , Effect.getTags ""
         , Effect.getPins
         , Effect.sendSharedMsg Shared.Msg.ResetFilter
         ]
@@ -193,6 +192,7 @@ update msg model =
                         , noteCount = List.length model.notes
                         }
                     )
+
 
 
 -- SUBSCRIPTIONS

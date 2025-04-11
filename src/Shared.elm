@@ -16,7 +16,6 @@ import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
 import Route.Path as Path
-import Set exposing (Set)
 import Shared.Model
 import Shared.Msg
 import Types.Theme as Theme

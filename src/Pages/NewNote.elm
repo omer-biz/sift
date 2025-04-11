@@ -1,9 +1,11 @@
 module Pages.NewNote exposing (Model, Msg, page)
 
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, type_, value)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onBlur, onClick, onFocus, onInput)
+import Json.Decode as D
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -12,6 +14,7 @@ import Task
 import Time exposing (Posix)
 import Types.Note as Note exposing (Note)
 import Types.Tag as Tag exposing (Tag)
+import Utils
 import View exposing (View)
 
 
@@ -39,6 +42,8 @@ type alias Model =
     { note : Note
     , tagQuery : String
     , tagSugg : List Tag
+    , tags : Dict Int Tag
+    , tagInput : Bool
     }
 
 
@@ -57,6 +62,8 @@ initModel =
     { note = newNote
     , tagQuery = ""
     , tagSugg = []
+    , tags = Dict.empty
+    , tagInput = False
     }
 
 
@@ -76,6 +83,10 @@ init () =
 type Msg
     = UpdateField Field String
     | TimeNow Posix
+    | GotTags (Result D.Error (List Tag))
+    | AddTagSugg Tag
+    | RemoveTag Tag
+    | ToggleTagInput Bool
 
 
 type Field
@@ -111,7 +122,11 @@ update msg model =
             ( { model
                 | tagQuery = value
               }
-            , Effect.none
+            , if String.trim value == "" then
+                Effect.none
+
+              else
+                Effect.getTags value
             )
 
         TimeNow posix ->
@@ -122,6 +137,25 @@ update msg model =
             , Effect.none
             )
 
+        GotTags (Ok tags) ->
+            ( { model | tagSugg = tags }, Effect.none )
+
+        GotTags (Err err) ->
+            let
+                _ =
+                    Debug.log "decode tags error: " err
+            in
+            ( model, Effect.none )
+
+        AddTagSugg tag ->
+            ( { model | tagQuery = "", tags = Dict.insert tag.id tag model.tags }, Effect.none )
+
+        RemoveTag tag ->
+            ( { model | tags = Dict.remove tag.id model.tags }, Effect.none )
+
+        ToggleTagInput value ->
+            ( { model | tagInput = value }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -129,7 +163,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Utils.receieve (D.list Tag.decode) GotTags Effect.recTags
 
 
 
@@ -210,6 +244,7 @@ viewEditor model =
             , fieldset [ class "px-4" ]
                 [ h2 [ class "text-lg font-semibold" ]
                     [ text "Tags" ]
+                , viewTags model.tags
                 , div [ class "relative w-full" ]
                     [ input
                         [ class "mt-4 p-2 border border-black-300 dark:border-black-600 rounded-md w-full bg-white-100 dark:bg-black-300 text-black-500 dark:text-white-100 focus:outline-none focus:ring-1 focus:ring-blue-300"
@@ -217,8 +252,11 @@ viewEditor model =
                         , value model.tagQuery
                         , type_ "text"
                         , onInput <| UpdateField TagQuery
+                        , onFocus <| ToggleTagInput True
+                        , onBlur <| ToggleTagInput False
                         ]
                         []
+                    , viewTagSuggs model
                     ]
                 ]
             , fieldset [ class "px-4 text-right space-x-4" ]
@@ -227,3 +265,40 @@ viewEditor model =
                 ]
             ]
         ]
+
+
+viewTagSuggs : Model -> Html Msg
+viewTagSuggs model =
+    let
+        colorToStyle color =
+            "bg-" ++ color ++ "-400"
+
+        viewSugg tag =
+            li
+                [ onClick <| AddTagSugg tag
+                , class <| "px-4 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white flex "
+                ]
+                [ span [ class <| "w-2 mr-2 rounded " ++ colorToStyle tag.color ] [], text tag.name ]
+    in
+    if model.tagInput || model.tagQuery /= "" then
+        ul [ class "absolute w-full bg-white dark:bg-black-600 border dark:border-black-700 rounded-lg mt-1 shadow-lg " ] <|
+            List.map viewSugg model.tagSugg
+
+    else
+        text ""
+
+
+viewTags : Dict Int Tag -> Html Msg
+viewTags tags =
+    if not <| Dict.isEmpty tags then
+        let
+            listTags =
+                tags
+                    |> Dict.toList
+                    |> List.map Tuple.second
+        in
+        div [ class "flex flex-wrap gap-2 mt-2" ] <|
+            List.map (\tag -> span [ onClick <| RemoveTag tag ] [ Tag.view tag ]) listTags
+
+    else
+        text ""

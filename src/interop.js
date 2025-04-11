@@ -33,7 +33,18 @@ async function getNotes(db, search = "", tagIds = []) {
   }));
 }
 
-async function getTags(db) {
+async function getTags(db, query) {
+  let term = query.trim().toLowerCase();
+  if (term.length != 0) {
+    return db.tags
+      .filter((tag) => {
+        return (
+          tag.name.toLowerCase().includes(term) ||
+          tag.color.toLowerCase().includes(term)
+        );
+      })
+      .toArray();
+  }
   return db.tags.toArray();
 }
 
@@ -104,7 +115,7 @@ export const onReady = ({ app, env }) => {
           return;
 
         case "GET_TAGS":
-          let tags = await getTags(db);
+          let tags = await getTags(db, data);
           app.ports.recTags.send(tags);
           return;
 

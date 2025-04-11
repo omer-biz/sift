@@ -1,16 +1,10 @@
-# sift
-> Built with [Elm Land](https://elm.land) 🌈
+# Sift
 
-## Local development
+Note-taking is hard. I’ve always felt there’s a missing step between having an
+idea and actually capturing it—and no app I tried quite filled that gap. So I
+built one myself. I call it Sift.
 
-```bash
-# Requires Node.js v18+ (https://nodejs.org)
-npx elm-land server
-```
-
-## Deploying to production
-
-Elm Land projects are most commonly deployed as static websites. 
-
-Please visit [the "Deployment" guide](https://elm.land/guide/deploying) to learn more
-about deploying your app for free using Netlify or Vercel.
+Sift isn’t here to replace your existing note-taking system. It’s designed to
+sit between you and your workflow. When inspiration strikes, you don’t want to
+think—you just want to jot it down and move on. Sift is made exactly for that:
+to catch your ideas the moment they appear, so you can return to them later..

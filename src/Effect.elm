@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createPin, getNotes, getPins, getTags, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme
+    , createPin, getNotes, getPins, getTags, pushToRoute, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme
     )
 
 {-|
@@ -35,6 +35,7 @@ import Shared.Msg
 import Task
 import Types.Pin as Pin exposing (Pin)
 import Url exposing (Url)
+import Utils
 
 
 type Effect msg
@@ -305,3 +306,21 @@ port recPins : (E.Value -> msg) -> Sub msg
 
 
 port recPin : (E.Value -> msg) -> Sub msg
+
+
+pushToRoute : List Int -> String -> Effect msg
+pushToRoute tags query =
+    let
+        tagStr =
+            tags
+                |> List.map String.fromInt
+                |> String.join ","
+    in
+    pushRoute
+        { path = Route.Path.Home_
+        , query =
+            Dict.empty
+                |> Utils.ternery (query /= "") (Dict.insert "search" query) identity
+                |> Utils.ternery (tags /= []) (Dict.insert "tags" tagStr) identity
+        , hash = Nothing
+        }

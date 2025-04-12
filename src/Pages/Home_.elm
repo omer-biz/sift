@@ -12,7 +12,6 @@ import Route exposing (Route)
 import Route.Path as Path
 import Set exposing (Set)
 import Shared
-import Shared.Msg
 import SvgAssets
 import Time
 import Types.Note as Note exposing (Note)
@@ -25,7 +24,7 @@ import View exposing (View)
 page : Shared.Model -> Route () -> Page Model Msg
 page shared route =
     Page.new
-        { init = init shared.pinFilter
+        { init = init route.query
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -52,18 +51,33 @@ type alias Model =
 
 
 init :
-    Maybe { selectedTags : List Int, searchQuery : String }
+    Dict String String
     -> ()
     -> ( Model, Effect Msg )
-init pinFilter () =
+init query () =
     let
-        ( searchQuery, selectedTags ) =
-            case pinFilter of
-                Just filter ->
-                    ( filter.searchQuery, filter.selectedTags )
+        searchQuery =
+            case Dict.get "search" query of
+                Just search ->
+                    search
 
                 Nothing ->
-                    ( "", [] )
+                    ""
+
+        selectedTags =
+            case Dict.get "tags" query of
+                Just tagStr ->
+                    tagStr
+                        |> String.split ","
+                        |> List.filterMap
+                            (\tag ->
+                                tag
+                                    |> String.trim
+                                    |> String.toInt
+                            )
+
+                Nothing ->
+                    []
     in
     ( { searchQuery = searchQuery
       , notes = []
@@ -75,7 +89,6 @@ init pinFilter () =
         [ Effect.getNotes { search = searchQuery, tags = selectedTags }
         , Effect.getTags ""
         , Effect.getPins
-        , Effect.sendSharedMsg Shared.Msg.ResetFilter
         ]
     )
 
@@ -99,7 +112,10 @@ update msg model =
     case msg of
         SearchQuery value ->
             ( { model | searchQuery = value }
-            , Effect.getNotes { search = value, tags = Set.toList model.selectedTags }
+            , Effect.batch
+                [ Effect.getNotes { search = value, tags = Set.toList model.selectedTags }
+                , Effect.pushToRoute (Set.toList model.selectedTags) value
+                ]
             )
 
         GotNotes (Ok notes) ->
@@ -165,11 +181,17 @@ update msg model =
 
                     else
                         Set.insert id model.selectedTags
+
+                tagList =
+                    Set.toList selectedTags
             in
             ( { model
                 | selectedTags = selectedTags
               }
-            , Effect.getNotes { search = model.searchQuery, tags = Set.toList selectedTags }
+            , Effect.batch
+                [ Effect.getNotes { search = model.searchQuery, tags = tagList }
+                , Effect.pushToRoute tagList model.searchQuery
+                ]
             )
 
         TogglePins ->

@@ -73,7 +73,10 @@ tagIdsStr ids =
         |> String.join ","
 
 
-receieve : Decoder a
-         -> (Result D.Error a -> msg) -> ((D.Value -> msg) -> Sub msg) -> Sub msg
+receieve :
+    Decoder a
+    -> (Result D.Error a -> msg)
+    -> ((D.Value -> msg) -> Sub msg)
+    -> Sub msg
 receieve decoder toMsg effect =
     effect (\value -> D.decodeValue decoder value |> toMsg)

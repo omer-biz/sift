@@ -55,7 +55,7 @@ init flagsResult route =
                 Err _ ->
                     Theme.System
     in
-    ( { theme = theme, pinFilter = Nothing }, Effect.none )
+    ( { theme = theme }, Effect.none )
 
 
 
@@ -74,13 +74,6 @@ update route msg model =
             , Effect.none
             )
 
-        Shared.Msg.SelectPin pinFilter ->
-            ( { model | pinFilter = Just pinFilter }
-            , Effect.pushRoutePath Path.Home_
-            )
-
-        Shared.Msg.ResetFilter ->
-            ( { model | pinFilter = Nothing }, Effect.none )
 
 
 

@@ -12,5 +12,3 @@ own file, so they can be imported by `Effect.elm`
 -}
 type Msg
     = NoOp
-    | SelectPin { selectedTags : List Int, searchQuery : String }
-    | ResetFilter

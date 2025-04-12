@@ -13,9 +13,9 @@ import Shared
 import Shared.Msg
 import SvgAssets
 import Types.Pin as Pin exposing (Pin)
+import Types.Tag as Tag
 import Utils
 import View exposing (View)
-import Types.Tag as Tag
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -89,11 +89,7 @@ update msg model =
 
         FilterNotes pin ->
             ( model
-            , Effect.sendSharedMsg <|
-                Shared.Msg.SelectPin
-                    { selectedTags = pin.tagIds
-                    , searchQuery = pin.searchQuery
-                    }
+            , Effect.none
             )
 
 

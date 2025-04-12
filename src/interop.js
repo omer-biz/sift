@@ -46,7 +46,6 @@ async function getNote(db, noteId) {
 
 async function saveNote(db, note) {
   let { id, ...n } = note;
-  console.log("tags", n.tagIds);
   let noteId = await db.notes.update(note.id, n);
 }
 
@@ -137,6 +136,7 @@ export const onReady = ({ app, env }) => {
 
         case "SAVE_NOTE":
           await saveNote(db, data);
+          app.ports.noteSaved.send(null);
           return;
 
         case "GET_TAGS":

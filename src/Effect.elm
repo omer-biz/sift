@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createPin, getNote, getNotes, getPins, getTags, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme, saveNote
+    , createPin, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme
     )
 
 {-|
@@ -343,3 +343,6 @@ port recPins : (E.Value -> msg) -> Sub msg
 
 
 port recPin : (E.Value -> msg) -> Sub msg
+
+
+port noteSaved : (() -> msg) -> Sub msg

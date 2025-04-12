@@ -4,13 +4,14 @@ import Components.Editor as Editor
 import Components.Title as Title
 import Effect exposing (Effect)
 import Html exposing (..)
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 import Json.Decode as D
 import Layouts
 import Page exposing (Page)
-import Platform exposing (Task)
 import Route exposing (Route)
 import Shared
-import Task exposing (Task)
+import SvgAssets
 import Time exposing (Posix)
 import Types.Note as Note exposing (Note)
 import Utils
@@ -32,10 +33,17 @@ toLayout : Model -> Layouts.Layout Msg
 toLayout model =
     Layouts.Scaffold
         { header =
-            Title.view
-                { note = model.editor.note
-                , onInput = UpdateTitle
-                }
+            div [ class "flex w-full" ]
+                [ Title.view
+                    { note = model.editor.note
+                    , onInput = UpdateTitle
+                    }
+                , div [ class "flex items-center gap-x-3" ]
+                    [ viewSaveState model.saveState
+                    , button [ onClick ToggleContextMenu ]
+                        [ SvgAssets.threeDot "w-7 h-7" ]
+                    ]
+                ]
         }
 
 
@@ -47,6 +55,7 @@ type alias Model =
     { note : NoteState
     , editor : Editor.Model
     , time : Posix
+    , saveState : SaveState
     }
 
 
@@ -72,6 +81,7 @@ init noteId () =
     ( { note = Loading
       , editor = Editor.init <| { note = Just newNote }
       , time = Time.millisToPosix 0
+      , saveState = Init
       }
     , Effect.getNote noteId
     )
@@ -87,11 +97,16 @@ type Msg
     | SaveNote Note
     | UpdateTitle String
     | GotTime Time.Posix
+    | ToggleContextMenu
+    | NoteSaved
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        ToggleContextMenu ->
+            ( model, Effect.none )
+
         GotNote (Ok note) ->
             ( { model
                 | note = Found note
@@ -112,10 +127,8 @@ update msg model =
                 timedNote =
                     { note | updatedAt = model.time }
 
-                _ =
-                    Debug.log "note" note
             in
-            ( model, Effect.saveNote timedNote )
+            ( { model | saveState = Saving }, Effect.saveNote timedNote )
 
         EditorSent innerMsg ->
             Editor.update
@@ -138,6 +151,10 @@ update msg model =
         GotTime time ->
             ( { model | time = time }, Effect.none )
 
+        NoteSaved ->
+            -- TODO: check if the note saving is successfull
+            ( { model | saveState = Saved }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -148,9 +165,9 @@ subscriptions model =
     Sub.batch
         [ Utils.receieve Note.decode GotNote Effect.recNote
         , Time.every 1000 GotTime
-        ,
-    Editor.subscriptions model.editor
-        |> Sub.map EditorSent
+        , Editor.subscriptions model.editor
+            |> Sub.map EditorSent
+        , Effect.noteSaved <| \_ -> NoteSaved
         ]
 
 
@@ -182,3 +199,39 @@ view model =
             { title = "loading..."
             , body = [ text "Loading..." ]
             }
+
+
+type SaveState
+    = Init
+    | Saving
+    | Saved
+    | Error
+
+
+viewSaveState : SaveState -> Html msg
+viewSaveState state =
+    case state of
+        Init ->
+            text ""
+
+        Saving ->
+            span
+                [ class "text-sm text-yellow-400 animate-pulse" ]
+                [ text "Saving..." ]
+
+        Saved ->
+            span
+                [ class "text-sm text-green-400 inline-flex items-center gap-1 transition-opacity duration-500 opacity-100" ]
+                [ checkIcon, text "Saved" ]
+
+        Error ->
+            span
+                [ class "text-sm text-red-400" ]
+                [ text "Error saving" ]
+
+
+checkIcon : Html msg
+checkIcon =
+    span
+        [ class "text-green-400 text-base" ]
+        [ text "✅" ]

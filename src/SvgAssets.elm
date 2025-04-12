@@ -88,3 +88,9 @@ pinhollow classStr =
 pinFilled : String -> Html msg
 pinFilled classStr =
     svg [ class classStr, fill "currentColor", viewBox "-3 -2.5 24 24", preserveAspectRatio "xMinYMin", class "jam jam-pin-f" ] [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M7.374 12.268l-5.656 5.657A1 1 0 1 1 .303 16.51l5.657-5.656L1.718 6.61A6.992 6.992 0 0 1 7.9 4.67L11.617.954a2 2 0 0 1 2.828 0l2.829 2.828a2 2 0 0 1 0 2.829l-3.716 3.716a6.992 6.992 0 0 1-1.941 6.183l-4.243-4.242z" ] [] ] ]
+
+
+threeDot : String -> Html msg
+threeDot classStr =
+    svg [ class classStr, viewBox "0 0 16 16", fill "currentColor", class "bi bi-three-dots-vertical" ]
+        [ g [ id "SVGRepo_bgCarrier", strokeWidth "0" ] [], g [ id "SVGRepo_tracerCarrier", strokeLinecap "round", strokeLinejoin "round" ] [], g [ id "SVGRepo_iconCarrier" ] [ Svg.path [ d "M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" ] [] ] ]

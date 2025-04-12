@@ -1,11 +1,10 @@
 module Pages.NewNote exposing (Model, Msg, page)
 
 import Components.Editor as Editor
+import Components.Title as Title
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
-import Html.Attributes exposing (class, placeholder, type_, value)
-import Html.Events exposing (onInput)
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -29,7 +28,13 @@ page shared route =
 
 toLayout : Model -> Layouts.Layout Msg
 toLayout model =
-    Layouts.Scaffold { header = viewTitle model.editor.note }
+    Layouts.Scaffold
+        { header =
+            Title.view
+                { note = model.editor.note
+                , onInput = UpdateTitle
+                }
+        }
 
 
 
@@ -48,7 +53,8 @@ type alias Model =
 
 newNote : Note
 newNote =
-    { title = ""
+    { id = 0
+    , title = ""
     , content = ""
     , tags = []
     , createdAt = Time.millisToPosix 0
@@ -63,7 +69,7 @@ initModel =
     , tagSugg = []
     , tags = Dict.empty
     , tagInput = False
-    , editor = Editor.init <| { note = Just newNote }
+    , editor = Editor.init { note = Just newNote }
     }
 
 
@@ -92,7 +98,7 @@ update msg model =
                 _ =
                     Debug.log "note" note
             in
-            ( model, Effect.none)
+            ( model, Effect.none )
 
         EditorSent innerMsg ->
             Editor.update
@@ -125,50 +131,6 @@ subscriptions model =
 
 
 -- VIEW
-
-
-viewTitle : Note -> Html Msg
-viewTitle note =
-    div [ class "flex justify-between items-center" ]
-        [ div [ class "flex flex-col" ]
-            [ input
-                [ class "text-xl w-64 font-bold bg-transparent border-0 focus:ring-0 placeholder-gray-500 px-1 ml-1 mt-1 focus:outline-none focus:ring-1 focus:ring-blue-300"
-                , placeholder "Note title..."
-                , type_ "text"
-                , value note.title
-                , onInput UpdateTitle
-                ]
-                []
-            , div [ class "text-sm text-gray-500 px-2" ]
-                [ text "Created: "
-                , span [ class "note-date" ]
-                    [ text "now" ]
-                , span [ class "mx-2" ]
-                    [ text "•" ]
-                , text "Last saved: "
-                , span [ class "mx-2" ]
-                    [ text "now" ]
-                ]
-            ]
-        , div [ class " px-4 flex items-center text-sm text-gray-500" ]
-            [ span [ class "word-count" ]
-                [ note.content
-                    |> String.words
-                    |> List.filter (\w -> w /= "")
-                    |> List.length
-                    |> String.fromInt
-                    |> (\count -> text <| count ++ " words")
-                ]
-            , span [ class "mx-2" ]
-                [ text "•" ]
-            , span [ class "character-count" ]
-                [ note.content
-                    |> String.length
-                    |> String.fromInt
-                    |> (\count -> text <| count ++ " chars")
-                ]
-            ]
-        ]
 
 
 view : Model -> View Msg

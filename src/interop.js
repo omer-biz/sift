@@ -33,6 +33,23 @@ async function getNotes(db, search = "", tagIds = []) {
   }));
 }
 
+async function getNote(db, noteId) {
+  let note = await db.notes.get(parseInt(noteId));
+
+  if (note != undefined) {
+    let tags = await db.tags.bulkGet(note.tagIds);
+    return { ...note, tags: tags };
+  }
+
+  return null;
+}
+
+async function saveNote(db, note) {
+  let { id, ...n } = note;
+  console.log("tags", n.tagIds);
+  let noteId = await db.notes.update(note.id, n);
+}
+
 async function getTags(db, query) {
   let term = query.trim().toLowerCase();
   if (term.length != 0) {
@@ -95,7 +112,6 @@ export const flags = ({ env }) => {
 
   return {
     theme: localStorage.theme || null,
-    favorites: JSON.parse(localStorage.favorites || "[]"),
   };
 };
 
@@ -112,6 +128,15 @@ export const onReady = ({ app, env }) => {
         case "GET_NOTES":
           let notes = await getNotes(db, data.search, data.tagIds);
           app.ports.recNotes.send(notes);
+          return;
+
+        case "GET_NOTE":
+          let note = await getNote(db, data);
+          app.ports.recNote.send(note);
+          return;
+
+        case "SAVE_NOTE":
+          await saveNote(db, data);
           return;
 
         case "GET_TAGS":

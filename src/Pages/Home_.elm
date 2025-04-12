@@ -43,6 +43,9 @@ toLayout model =
 
 type alias Model =
     { searchQuery : String
+
+    -- TODO: have a Card type which will be responsible for loading the the tags
+    -- and remove List Tag from the Note type
     , notes : List Note
     , tags : List Tag
     , selectedTags : Set Int
@@ -105,6 +108,7 @@ type Msg
     | GotPin (Result D.Error Pin)
     | ToggleTag Int
     | TogglePins
+    | OpenNote Int
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -215,6 +219,9 @@ update msg model =
                         }
                     )
 
+        OpenNote id ->
+            ( model, Effect.pushRoutePath <| Path.Note_Id_ { id = String.fromInt id } )
+
 
 
 -- SUBSCRIPTIONS
@@ -257,7 +264,7 @@ viewNotes notes =
     div [ class "mt-2 pt-0 pb-4 space-y-4 mx-4" ] <| List.map viewNote notes
 
 
-viewNote : Note -> Html msg
+viewNote : Note -> Html Msg
 viewNote note =
     let
         styleTag color =
@@ -273,7 +280,10 @@ viewNote note =
                 ]
                 [ text <| "#" ++ tag.name ]
     in
-    article [ class "pointer:cursor bg-white-200 dark:bg-black-400 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow items-start justify-between relative border border-1 border-black-200" ]
+    article
+        [ onClick <| OpenNote note.id
+        , class "pointer:cursor bg-white-200 dark:bg-black-400 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow items-start justify-between relative border border-1 border-black-200"
+        ]
         [ h3 [ class "text-lg font-semibold text-gray-900 dark:text-gray-100" ]
             [ text note.title ]
         , p [ class "mt-1 text-gray-600 dark:text-gray-300 text-sm" ] [ text note.content ]

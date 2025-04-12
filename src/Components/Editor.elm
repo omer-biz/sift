@@ -33,7 +33,8 @@ new props =
 
 newNote : Note
 newNote =
-    { title = ""
+    { id = 0
+    , title = ""
     , content = ""
     , tags = []
     , createdAt = Time.millisToPosix 0
@@ -52,10 +53,14 @@ type alias Model =
 
 init : { a | note : Maybe Note } -> Model
 init opts =
-    { note = Maybe.withDefault newNote opts.note
+    let
+        note =
+            Maybe.withDefault newNote opts.note
+    in
+    { note = note
     , tagQuery = ""
     , tagSugg = []
-    , tags = Dict.empty
+    , tags = Dict.fromList <| (List.map (\tag -> ( tag.id, tag ))) note.tags
     , tagInputFocus = False
     }
 
@@ -150,7 +155,7 @@ update props =
                 ( model, Effect.back )
 
             NoOp ->
-                ( model, Effect.none)
+                ( model, Effect.none )
 
 
 subscriptions : Model -> Sub Msg

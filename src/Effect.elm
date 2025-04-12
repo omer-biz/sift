@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createPin, getNotes, getPins, getTags, pushToRoute, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme
+    , createPin, getNote, getNotes, getPins, getTags, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, savePins, sendSharedMsg, switchTheme, saveNote
     )
 
 {-|
@@ -26,13 +26,13 @@ port module Effect exposing
 
 import Browser.Navigation
 import Dict exposing (Dict)
-import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
 import Route
 import Route.Path
 import Shared.Model
 import Shared.Msg
 import Task
+import Types.Note as Note
 import Types.Pin as Pin exposing (Pin)
 import Url exposing (Url)
 import Utils
@@ -296,18 +296,6 @@ removePin id =
         }
 
 
-port recNotes : (E.Value -> msg) -> Sub msg
-
-
-port recTags : (E.Value -> msg) -> Sub msg
-
-
-port recPins : (E.Value -> msg) -> Sub msg
-
-
-port recPin : (E.Value -> msg) -> Sub msg
-
-
 pushToRoute : List Int -> String -> Effect msg
 pushToRoute tags query =
     let
@@ -324,3 +312,34 @@ pushToRoute tags query =
                 |> Utils.ternery (tags /= []) (Dict.insert "tags" tagStr) identity
         , hash = Nothing
         }
+
+
+getNote : String -> Effect msg
+getNote noteId =
+    SendMessageToJavaScript
+        { tag = "GET_NOTE"
+        , data = E.string noteId
+        }
+
+
+saveNote : Note.Note -> Effect msg
+saveNote note =
+    SendMessageToJavaScript
+        { tag = "SAVE_NOTE"
+        , data = Note.encode note
+        }
+
+
+port recNotes : (E.Value -> msg) -> Sub msg
+
+
+port recNote : (E.Value -> msg) -> Sub msg
+
+
+port recTags : (E.Value -> msg) -> Sub msg
+
+
+port recPins : (E.Value -> msg) -> Sub msg
+
+
+port recPin : (E.Value -> msg) -> Sub msg

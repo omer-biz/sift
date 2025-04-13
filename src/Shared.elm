@@ -15,9 +15,10 @@ module Shared exposing
 import Effect exposing (Effect)
 import Json.Decode
 import Route exposing (Route)
-import Route.Path as Path
 import Shared.Model
 import Shared.Msg
+import Task
+import Time
 import Types.Theme as Theme
 
 
@@ -55,7 +56,11 @@ init flagsResult route =
                 Err _ ->
                     Theme.System
     in
-    ( { theme = theme }, Effect.none )
+    ( { theme = theme, zone = Time.utc }
+    , Time.here
+        |> Task.perform Shared.Msg.UpdateZone
+        |> Effect.sendCmd
+    )
 
 
 
@@ -74,6 +79,8 @@ update route msg model =
             , Effect.none
             )
 
+        Shared.Msg.UpdateZone zone ->
+            ( { model | zone = zone }, Effect.none )
 
 
 

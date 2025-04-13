@@ -53,6 +53,10 @@ async function createNote(db, newNote) {
   return db.notes.add(newNote);
 }
 
+async function deleteNote(db, noteId) {
+  return db.notes.delete(noteId);
+}
+
 async function getTags(db, query) {
   let term = query.trim().toLowerCase();
   if (term.length != 0) {
@@ -135,6 +139,7 @@ export const onReady = ({ app, env }) => {
 
         case "GET_NOTE":
           let note = await getNote(db, data);
+          console.log("note", note);
           app.ports.recNote.send(note);
           return;
 
@@ -148,6 +153,9 @@ export const onReady = ({ app, env }) => {
           app.ports.noteSaved.send(noteId);
           return;
 
+        case "DELETE_NOTE":
+          await deleteNote(db, data);
+          return;
         case "GET_TAGS":
           let tags = await getTags(db, data);
           app.ports.recTags.send(tags);

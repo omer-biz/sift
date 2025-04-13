@@ -102,13 +102,7 @@ type Msg
     | GotTime Time.Posix
     | ToggleContextMenu
     | NoteSaved
-    | ContextMenu Option
-
-
-type Option
-    =
-     Delete
-    | Archive
+    | DeleteNote Int
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -164,8 +158,14 @@ update msg model =
             -- TODO: check if the note saving is successfull
             ( { model | saveState = Saved }, Effect.none )
 
-        ContextMenu opt ->
-            ( { model | showOptions = False }, Effect.none )
+        DeleteNote id ->
+            -- TODO: confirm deletion
+            ( { model | showOptions = False }
+            , Effect.batch
+                [ Effect.deleteNote id
+                , Effect.back
+                ]
+            )
 
 
 
@@ -263,9 +263,6 @@ viewOptions model =
             [ onClick <| SaveNote model.editor.note, class "px-4 py-2" ]
             [ text "Save" ]
         , button
-            [ onClick <| ContextMenu Delete, class "px-4 py-2" ]
+            [ onClick <| DeleteNote model.editor.note.id, class "px-4 py-2" ]
             [ text "Delete" ]
-        , button
-            [ onClick <| ContextMenu Archive, class "px-4 py-2 disabled" ]
-            [ text "Archive" ]
         ]

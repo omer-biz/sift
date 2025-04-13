@@ -5,8 +5,7 @@ port module Effect exposing
     , pushRoute, replaceRoute
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
-    , map, toCmd
-    , createPin, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme, createNote
+    , map, toCmd , createNote, createPin, deleteNote, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme
     )
 
 {-|
@@ -254,6 +253,15 @@ getNotes options =
                 [ ( "search", E.string options.search )
                 , ( "tagIds", E.list E.int options.tags )
                 ]
+        }
+
+
+deleteNote : Int -> Effect msg
+deleteNote id =
+    SendMessageToJavaScript
+        { tag = "DELETE_NOTE"
+        , data =
+            E.int id
         }
 
 

@@ -6,7 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createPin, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme
+    , createPin, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme, createNote
     )
 
 {-|
@@ -32,6 +32,7 @@ import Route.Path
 import Shared.Model
 import Shared.Msg
 import Task
+import Time
 import Types.Note as Note
 import Types.Pin as Pin exposing (Pin)
 import Url exposing (Url)
@@ -330,6 +331,22 @@ saveNote note =
         }
 
 
+createNote :
+    { a
+        | title : String
+        , content : String
+        , tags : List { b | id : Int }
+        , createdAt : Time.Posix
+        , updatedAt : Time.Posix
+    }
+    -> Effect msg
+createNote note =
+    SendMessageToJavaScript
+        { tag = "CREATE_NOTE"
+        , data = Note.encodeNew note
+        }
+
+
 port recNotes : (E.Value -> msg) -> Sub msg
 
 
@@ -345,4 +362,4 @@ port recPins : (E.Value -> msg) -> Sub msg
 port recPin : (E.Value -> msg) -> Sub msg
 
 
-port noteSaved : (() -> msg) -> Sub msg
+port noteSaved : (Int -> msg) -> Sub msg

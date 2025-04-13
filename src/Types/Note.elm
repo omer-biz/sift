@@ -1,4 +1,4 @@
-module Types.Note exposing (Note, decode, encode)
+module Types.Note exposing (Note, decode, encode, encodeNew)
 
 import Iso8601
 import Json.Decode as D
@@ -33,6 +33,20 @@ encode note =
     E.object
         [ ( "id", E.int note.id )
         , ( "title", E.string note.title )
+        , ( "content", E.string note.content )
+        , ( "tagIds", E.list E.int <| List.map .id note.tags )
+        , ( "createdAt", Iso8601.encode note.createdAt )
+        , ( "updatedAt", Iso8601.encode note.updatedAt )
+        ]
+
+
+encodeNew :
+    { a | title : String,
+          content : String, tags : List { b | id : Int }, createdAt : Posix, updatedAt : Posix }
+        -> E.Value
+encodeNew note =
+    E.object
+        [ ( "title", E.string note.title )
         , ( "content", E.string note.content )
         , ( "tagIds", E.list E.int <| List.map .id note.tags )
         , ( "createdAt", Iso8601.encode note.createdAt )

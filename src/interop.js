@@ -49,6 +49,10 @@ async function saveNote(db, note) {
   let noteId = await db.notes.update(note.id, n);
 }
 
+async function createNote(db, newNote) {
+  return db.notes.add(newNote);
+}
+
 async function getTags(db, query) {
   let term = query.trim().toLowerCase();
   if (term.length != 0) {
@@ -136,7 +140,12 @@ export const onReady = ({ app, env }) => {
 
         case "SAVE_NOTE":
           await saveNote(db, data);
-          app.ports.noteSaved.send(null);
+          app.ports.noteSaved.send(0);
+          return;
+
+        case "CREATE_NOTE":
+          let noteId = await createNote(db, data);
+          app.ports.noteSaved.send(noteId);
           return;
 
         case "GET_TAGS":

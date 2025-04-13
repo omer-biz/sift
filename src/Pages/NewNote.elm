@@ -8,7 +8,9 @@ import Html exposing (..)
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
+import Route.Path as Path
 import Shared
+import Task
 import Time
 import Types.Note exposing (Note)
 import Types.Tag exposing (Tag)
@@ -48,6 +50,7 @@ type alias Model =
     , tags : Dict Int Tag
     , tagInput : Bool
     , editor : Editor.Model
+    , time : Time.Posix
     }
 
 
@@ -70,13 +73,15 @@ initModel =
     , tags = Dict.empty
     , tagInput = False
     , editor = Editor.init { note = Just newNote }
+    , time = Time.millisToPosix 0
     }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
     ( initModel
-    , Effect.none
+    , Task.perform InitTime Time.now
+        |> Effect.sendCmd
     )
 
 
@@ -88,17 +93,15 @@ type Msg
     = CreateNote Note
     | EditorSent Editor.Msg
     | UpdateTitle String
+    | InitTime Time.Posix
+    | NoteCreated Int
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         CreateNote note ->
-            let
-                _ =
-                    Debug.log "note" note
-            in
-            ( model, Effect.none )
+            ( model, Effect.createNote note )
 
         EditorSent innerMsg ->
             Editor.update
@@ -118,6 +121,19 @@ update msg model =
             in
             ( { model | editor = { editor | note = { note | title = title } } }, Effect.none )
 
+        InitTime time ->
+            let
+                editor =
+                    model.editor
+
+                note =
+                    editor.note
+            in
+            ( { model | editor = { editor | note = { note | createdAt = time, updatedAt = time } } }, Effect.none )
+
+        NoteCreated id ->
+            ( model, Effect.pushRoutePath <| Path.Note_Id_ { id = String.fromInt id } )
+
 
 
 -- SUBSCRIPTIONS
@@ -125,8 +141,11 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Editor.subscriptions model.editor
-        |> Sub.map EditorSent
+    Sub.batch
+        [ Editor.subscriptions model.editor
+            |> Sub.map EditorSent
+        , Effect.noteSaved NoteCreated
+        ]
 
 
 

@@ -10,6 +10,7 @@ import Time
 import Types.Note exposing (Note)
 import Types.Tag as Tag exposing (Tag)
 import Utils
+import Html.Attributes exposing (id)
 
 
 type Editor msg
@@ -256,7 +257,8 @@ view (Settings settings) =
             -- note body
             , fieldset [ class " h-screen dark:border-gray-700 flex-grow flex flex-col" ]
                 [ textarea
-                    [ class "w-full bg-white-200 p-4 flex-grow dark:bg-black-400 dark:text-white-100 h-full focus:outline-none"
+                    [ id "note-content-editor"
+                    , class "w-full bg-white-200 p-4 flex-grow dark:bg-black-400 dark:text-white-100 h-full focus:outline-none"
                     , placeholder "Write your note here..."
                     , onInput <| (settings.toMsg << UpdateField Content)
                     , value note.content

@@ -1,5 +1,6 @@
 module Pages.Note.Id_ exposing (Model, Msg, page)
 
+import Browser.Dom as Dom exposing (focus)
 import Components.Editor as Editor
 import Components.Title as Title
 import Effect exposing (Effect)
@@ -12,6 +13,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import SvgAssets
+import Task exposing (Task)
 import Time exposing (Posix)
 import Types.Note as Note exposing (Note)
 import Utils
@@ -86,7 +88,13 @@ init noteId () =
       , saveState = Init
       , showOptions = False
       }
-    , Effect.getNote noteId
+    , Effect.batch
+        [ Effect.getNote noteId
+        , "note-content-editor"
+            |> Dom.focus
+            |> Task.attempt (\_ -> NoOp)
+            |> Effect.sendCmd
+        ]
     )
 
 
@@ -103,11 +111,14 @@ type Msg
     | ToggleContextMenu
     | NoteSaved
     | DeleteNote Int
+    | NoOp
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        NoOp ->
+            ( model, Effect.none )
         ToggleContextMenu ->
             ( { model | showOptions = not model.showOptions }, Effect.none )
 

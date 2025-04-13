@@ -42,7 +42,7 @@ toLayout model =
                 , div [ class "flex items-center gap-x-3" ]
                     [ button
                         [ onClick <| CreateNote model.editor.note
-                        , class "bg-green-300 rounded-xl px-3 py-1 text-xl"
+                        , class "text-white-100 bg-green-300 rounded-xl px-3 py-1 text-xl"
                         ]
                         [ text "create" ]
                     ]

@@ -5,6 +5,8 @@ import Components.Title as Title
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 import Layouts
 import Page exposing (Page)
 import Route exposing (Route)
@@ -32,10 +34,19 @@ toLayout : Model -> Layouts.Layout Msg
 toLayout model =
     Layouts.Scaffold
         { header =
-            Title.view
-                { note = model.editor.note
-                , onInput = UpdateTitle
-                }
+            div [ class "flex w-full" ]
+                [ Title.view
+                    { note = model.editor.note
+                    , onInput = UpdateTitle
+                    }
+                , div [ class "flex items-center gap-x-3" ]
+                    [ button
+                        [ onClick <| CreateNote model.editor.note
+                        , class "bg-green-300 rounded-xl px-3 py-1 text-xl"
+                        ]
+                        [ text "create" ]
+                    ]
+                ]
         }
 
 

@@ -89,7 +89,8 @@ update msg model =
 
         FilterNotes pin ->
             ( model
-            , Effect.none
+            , Effect.pushToRoute
+                  (List.map .id pin.tags) pin.searchQuery
             )
 
 

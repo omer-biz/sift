@@ -124,7 +124,7 @@ viewPins pins =
                 [ div []
                     [ h2 [] [ span [ class "font-bold underline" ] [ text <| "'" ++ pin.searchQuery ++ "'" ] ]
                     , div [ class "mt-2 text-sm flex flex-wrap gap-2" ] <|
-                        List.map Tag.view pin.tags
+                        List.map (Tag.view "") pin.tags
                     ]
                 , span [ class "flex items-center text-xl gap-x-2" ]
                     [ text <| String.fromInt pin.noteCount

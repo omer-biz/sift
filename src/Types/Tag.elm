@@ -17,15 +17,15 @@ decode =
         (D.field "color" D.string)
 
 
-view : Tag -> Html.Html msg
-view tag =
+view : String ->  Tag -> Html.Html msg
+view style tag =
     let
         styleTag =
             "border-" ++ tag.color ++ "-400 bg-" ++ tag.color ++ "-400 text-white-100"
     in
     Html.span
         [ String.join " "
-            [ "text-xs px-2 py-[3px] rounded-md"
+            [ if style == "" then "text-xs px-2 py-[3px] rounded-md" else style
             , styleTag
             ]
             |> Attr.class

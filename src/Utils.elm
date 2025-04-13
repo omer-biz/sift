@@ -1,5 +1,7 @@
-module Utils exposing (formatDate, receieve, tagIdsStr, ternery, diffDays)
+module Utils exposing (diffDays, formatDate, receieve, tagIdsStr, ternery, onclk)
 
+import Html
+import Html.Events
 import Json.Decode as D exposing (Decoder)
 import Time
 
@@ -83,7 +85,7 @@ receieve decoder toMsg effect =
 
 
 diffDays : Time.Posix -> Time.Posix -> Int
-diffDays  posix1 posix2 =
+diffDays posix1 posix2 =
     let
         millisPerDay =
             1000 * 60 * 60 * 24
@@ -92,3 +94,8 @@ diffDays  posix1 posix2 =
             Time.posixToMillis posix1 - Time.posixToMillis posix2
     in
     diffMillis // millisPerDay
+
+
+onclk : msg -> Html.Attribute msg
+onclk msg =
+    Html.Events.stopPropagationOn "click" <| D.map (\a -> ( a, True )) (D.succeed msg)

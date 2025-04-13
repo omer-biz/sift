@@ -43,6 +43,7 @@ toLayout model =
                     , button [ onClick ToggleContextMenu ]
                         [ SvgAssets.threeDot "w-7 h-7" ]
                     ]
+                , viewOptions model
                 ]
         }
 
@@ -56,6 +57,7 @@ type alias Model =
     , editor : Editor.Model
     , time : Posix
     , saveState : SaveState
+    , showOptions : Bool
     }
 
 
@@ -82,6 +84,7 @@ init noteId () =
       , editor = Editor.init <| { note = Just newNote }
       , time = Time.millisToPosix 0
       , saveState = Init
+      , showOptions = False
       }
     , Effect.getNote noteId
     )
@@ -99,13 +102,20 @@ type Msg
     | GotTime Time.Posix
     | ToggleContextMenu
     | NoteSaved
+    | ContextMenu Option
+
+
+type Option
+    =
+     Delete
+    | Archive
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         ToggleContextMenu ->
-            ( model, Effect.none )
+            ( { model | showOptions = not model.showOptions }, Effect.none )
 
         GotNote (Ok note) ->
             ( { model
@@ -126,9 +136,8 @@ update msg model =
             let
                 timedNote =
                     { note | updatedAt = model.time }
-
             in
-            ( { model | saveState = Saving }, Effect.saveNote timedNote )
+            ( { model | saveState = Saving, showOptions = False }, Effect.saveNote timedNote )
 
         EditorSent innerMsg ->
             Editor.update
@@ -154,6 +163,9 @@ update msg model =
         NoteSaved ->
             -- TODO: check if the note saving is successfull
             ( { model | saveState = Saved }, Effect.none )
+
+        ContextMenu opt ->
+            ( { model | showOptions = False }, Effect.none )
 
 
 
@@ -235,3 +247,25 @@ checkIcon =
     span
         [ class "text-green-400 text-base" ]
         [ text "✅" ]
+
+
+viewOptions : Model -> Html Msg
+viewOptions model =
+    div
+        [ class <|
+            if model.showOptions then
+                "absolute  divide-y dark:divide-black-400 top-14 right-8 flex flex-col dark:bg-black-300 rounded"
+
+            else
+                "hidden"
+        ]
+        [ button
+            [ onClick <| SaveNote model.editor.note, class "px-4 py-2" ]
+            [ text "Save" ]
+        , button
+            [ onClick <| ContextMenu Delete, class "px-4 py-2" ]
+            [ text "Delete" ]
+        , button
+            [ onClick <| ContextMenu Archive, class "px-4 py-2 disabled" ]
+            [ text "Archive" ]
+        ]

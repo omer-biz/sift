@@ -90,7 +90,7 @@ view route props { toContentMsg, model, content } =
         [ header
             [ class <|
                 String.join " "
-                    [ "md:w-[900px] md:mx-auto bg-white dark:bg-black-500 shadow"
+                    [ "md:w-[900px] md:mx-auto bg-white dark:bg-black-500 border-b border-black-500"
                     , Utils.ternery model.sidebarOpen "sticky top-0 z-50" ""
                     ]
             ]
@@ -99,7 +99,7 @@ view route props { toContentMsg, model, content } =
                 , div [ class "w-full flex justify-between" ] [ props.header ]
                 ]
             ]
-        , div [ class "md:max-w-[700px] md:mx-auto" ] content.body
+        , div [ class "md:max-w-[700px] md:mx-auto h-screen" ] content.body
         , Html.map toContentMsg <| viewSideBar model route
         , viewFooter
         ]

@@ -48,6 +48,7 @@ type alias Model =
     , tagSugg : List Tag
     , tags : Dict Int Tag
     , tagInputFocus : Bool
+    , showModal : Bool
     }
 
 
@@ -60,8 +61,9 @@ init opts =
     { note = note
     , tagQuery = ""
     , tagSugg = []
-    , tags = Dict.fromList <| (List.map (\tag -> ( tag.id, tag ))) note.tags
+    , tags = Dict.fromList <| List.map (\tag -> ( tag.id, tag )) note.tags
     , tagInputFocus = False
+    , showModal = False
     }
 
 
@@ -73,6 +75,8 @@ type Msg
     | ToggleTagInput Bool
     | Cancel
     | NoOp
+    | ActivateModal
+    | CloseModal
 
 
 type Field
@@ -157,6 +161,12 @@ update props =
             NoOp ->
                 ( model, Effect.none )
 
+            ActivateModal ->
+                ( { model | showModal = True }, Effect.none )
+
+            CloseModal ->
+                ( { model | showModal = False }, Effect.none )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -178,14 +188,14 @@ view (Settings settings) =
                     "bg-" ++ color ++ "-400"
 
                 viewSugg tag =
-                    li
+                    span
                         [ onClick <| (settings.toMsg << AddTagSugg) tag
-                        , class <| "px-4 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white flex "
+                        , class <| "px-4 border-b border-black-500 py-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white flex "
                         ]
                         [ span [ class <| "w-2 mr-2 rounded " ++ colorToStyle tag.color ] [], text tag.name ]
             in
             if model.tagQuery /= "" then
-                ul [ class "absolute w-full bg-white-200 dark:bg-black-600 border dark:border-black-700 rounded-lg mt-1 shadow-lg " ] <|
+                div [ class "w-full mt-4 overflow-y-auto" ] <|
                     List.map viewSugg model.tagSugg
 
             else
@@ -199,47 +209,60 @@ view (Settings settings) =
                             |> Dict.toList
                             |> List.map Tuple.second
                 in
-                div [ class "flex flex-wrap gap-2 mt-2" ] <|
-                    List.map (\tag -> span [ onClick <| (settings.toMsg << RemoveTag) tag ] [ Tag.view tag ]) listTags
+                List.map (\tag -> button [ onClick <| (settings.toMsg << RemoveTag) tag ] [ Tag.view " text-md p-1 px-2 rounded-xl" tag ]) listTags
+
+            else
+                []
+
+        viewModal =
+            if model.showModal then
+                div [ onClick (settings.toMsg CloseModal), class "fixed inset-0 z-50 bg-[#181818]/50 flex items-center justify-center" ]
+                    [ div [ Utils.onclk <| settings.toMsg NoOp, class "bg-white-300 dark:bg-black-400 rounded-2xl shadow-xl w-full max-w-md p-6 relative h-96 space-y-4" ]
+                        [ div [ class "" ]
+                            [ div [ class "flex gap-x-2" ]
+                                [ input
+                                    [ class "p-2 border border-black-300 dark:border-black-600 rounded-md w-full bg-white-100 dark:bg-black-200 text-black-500 dark:text-white-100 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                                    , placeholder "Add a tag and press Enter"
+                                    , value model.tagQuery
+                                    , type_ "text"
+                                    , onInput <| (settings.toMsg << UpdateField TagQuery)
+                                    , onFocus <| (settings.toMsg << ToggleTagInput) True
+                                    , onBlur <| (settings.toMsg << ToggleTagInput) False
+                                    ]
+                                    []
+                                , button [ class "rounded w-32 text-white-100 bg-blue-200" ] [ text "create tag" ]
+                                ]
+                            , viewTagSuggs
+                            ]
+                        ]
+                    ]
 
             else
                 text ""
     in
-    div [ class "my-4 w-full bg-white-100 dark:bg-black-500 rounded-xl shadow-sm" ]
-        [ form [ onSubmit <| settings.toMsg NoOp, class "grid md:min-w-[700px] gap-3 min-h-[60vh]" ]
-            [ -- note body
-              fieldset [ class "edit-mode px-4 pt-4 border-r dark:border-gray-700" ]
+    div [ class "w-full bg-white-100 dark:bg-black-500 h-full" ]
+        [ form [ onSubmit <| settings.toMsg NoOp, class "md:min-w-[700px] min-h-[60vh] flex flex-col" ]
+            [ -- tags
+              fieldset []
+                [ div [ class "flex flex-wrap gap-2 items-center my-2 px-4" ] <|
+                    button
+                        [ onClick (settings.toMsg ActivateModal)
+                        , class "bg-blue-100 hover:bg-blue-200 rounded-2xl shadow px-2 py-1 text-white-100"
+                        ]
+                        [ text "+ add tag" ]
+                        :: viewTags model.tags
+                ]
+
+            -- note body
+            , fieldset [ class " h-screen dark:border-gray-700 flex-grow flex flex-col" ]
                 [ textarea
-                    [ class "w-full h-64 p-2 border border-black-300 dark:border-black-400 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-300 dark:bg-black-300 dark:text-white-100"
+                    [ class "w-full bg-white-200 p-4 flex-grow dark:bg-black-400 dark:text-white-100 h-full focus:outline-none"
                     , placeholder "Write your note here..."
                     , onInput <| (settings.toMsg << UpdateField Content)
                     , value note.content
                     ]
                     []
                 ]
-
-            -- tag query field
-            , fieldset [ class "px-4" ]
-                [ h2 [ class "text-lg font-semibold" ]
-                    [ text "Tags" ]
-                , viewTags model.tags
-                , div [ class "relative w-full" ]
-                    [ input
-                        [ class "mt-4 p-2 border border-black-300 dark:border-black-600 rounded-md w-full bg-white-100 dark:bg-black-300 text-black-500 dark:text-white-100 focus:outline-none focus:ring-1 focus:ring-blue-300"
-                        , placeholder "Add a tag and press Enter"
-                        , value model.tagQuery
-                        , type_ "text"
-                        , onInput <| (settings.toMsg << UpdateField TagQuery)
-                        , onFocus <| (settings.toMsg << ToggleTagInput) True
-                        , onBlur <| (settings.toMsg << ToggleTagInput) False
-                        ]
-                        []
-                    , viewTagSuggs
-                    ]
-                ]
-            , fieldset [ class "px-4 text-right space-x-4" ]
-                [ button [ onClick <| settings.toMsg Cancel, class "bg-red-100 hover:bg-red-200 rounded shadow px-2 py-1 text-white-100" ] [ text "Cancle" ]
-                , button [ onClick <| settings.onSubmit model.note, class "bg-blue-100 hover:bg-blue-200 rounded shadow px-2 py-1 text-white-100" ] [ text "Save" ]
-                ]
             ]
+        , viewModal
         ]

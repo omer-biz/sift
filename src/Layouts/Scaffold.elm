@@ -99,7 +99,7 @@ view route props { toContentMsg, model, content } =
                 , div [ class "w-full flex justify-between" ] [ props.header ]
                 ]
             ]
-        , div [ class "md:max-w-[700px] md:mx-auto h-screen" ] content.body
+        , div [ class "md:max-w-[700px] md:mx-auto min-h-screen" ] content.body
         , Html.map toContentMsg <| viewSideBar model route
         , viewFooter
         ]

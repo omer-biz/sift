@@ -16,6 +16,7 @@ export async function seed(db) {
     { name: "reading", color: "violet" },
     { name: "tech", color: "sky" },
     { name: "finance", color: "green" },
+    { name: "todo", color: "pink" },
     { name: "random", color: "purple" },
   ]);
 

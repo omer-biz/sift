@@ -13,6 +13,7 @@ import Route.Path as Path
 import Set exposing (Set)
 import Shared
 import SvgAssets
+import Task
 import Time
 import Types.Note as Note exposing (Note)
 import Types.Pin as Pin exposing (Pin)
@@ -50,6 +51,7 @@ type alias Model =
     , tags : List Tag
     , selectedTags : Set Int
     , pins : Dict String Pin
+    , today : Time.Posix
     }
 
 
@@ -87,11 +89,15 @@ init query () =
       , tags = []
       , selectedTags = Set.fromList selectedTags
       , pins = Dict.empty
+      , today = Time.millisToPosix 0
       }
     , Effect.batch
         [ Effect.getNotes { search = searchQuery, tags = selectedTags }
         , Effect.getTags ""
         , Effect.getPins
+        , Time.now
+            |> Task.perform Today
+            |> Effect.sendCmd
         ]
     )
 
@@ -109,6 +115,7 @@ type Msg
     | ToggleTag Int
     | TogglePins
     | OpenNote Int
+    | Today Time.Posix
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -222,6 +229,9 @@ update msg model =
         OpenNote id ->
             ( model, Effect.pushRoutePath <| Path.Note_Id_ { id = String.fromInt id } )
 
+        Today today ->
+            ( { model | today = today }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -255,13 +265,63 @@ viewBody : Model -> Html Msg
 viewBody model =
     main_ [ class "" ]
         [ viewTags model.selectedTags model.tags
-        , viewNotes model.notes
+        , viewNotes model.today model.notes
         ]
 
 
-viewNotes : List Note -> Html Msg
-viewNotes notes =
-    div [ class "mt-2 pt-0 pb-4 space-y-4 mx-4" ] <| List.map viewNote notes
+groupNotesByDate : Time.Posix -> List Note -> List ( String, List Note )
+groupNotesByDate today notes =
+    let
+        labelFor date =
+            case Utils.diffDays today date of
+                0 ->
+                    "Today"
+
+                1 ->
+                    "Yesterday"
+
+                _ ->
+                    Utils.formatDate Time.utc date
+
+        labelNotes : Note -> List ( String, List Note ) -> List ( String, List Note )
+        labelNotes note labeledNotes =
+            let
+                currentLabel =
+                    labelFor note.updatedAt
+            in
+            case labeledNotes of
+                [] ->
+                    [ ( currentLabel, [ note ] ) ]
+
+                ( existingLabel, existingNotes ) :: rest ->
+                    if existingLabel == currentLabel then
+                        ( existingLabel, note :: existingNotes ) :: rest
+                    else
+                        ( currentLabel, [ note ] ) :: labeledNotes
+    in
+    List.foldl labelNotes [] notes
+        |> List.reverse
+        |> List.map (\( label, ns ) -> ( label, List.reverse ns ))
+
+
+viewNotes : Time.Posix -> List Note -> Html Msg
+viewNotes today notes =
+    let
+        groups =
+            groupNotesByDate today notes
+
+        renderGroup ( label, ns ) =
+            div []
+                [ div [ class "mt-2 mb-1 flex items-center gap-2" ]
+                    [ div [ class "text-md flex items-center text-gray-500 dark:text-gray-400 text-sm min-w-32 gap-x-1" ]
+                        [ SvgAssets.cal "w-6 h-6 m4-1"
+                        , text label
+                        ]
+                    ]
+                , div [ class "space-y-3" ] <| List.map viewNote ns
+                ]
+    in
+    div [ class "mt-2 pt-0 pb-4 space-y-4 mx-4" ] <| List.map renderGroup groups
 
 
 viewNote : Note -> Html Msg
@@ -287,12 +347,6 @@ viewNote note =
         [ h3 [ class "text-lg font-semibold text-gray-900 dark:text-gray-100" ]
             [ text note.title ]
         , p [ class "mt-1 text-gray-600 dark:text-gray-300 text-sm" ] [ text note.content ]
-        , div [ class "mt-2 flex items-center gap-2" ]
-            [ div [ class "flex items-center text-gray-500 dark:text-gray-400 text-sm min-w-32 gap-x-1" ]
-                [ SvgAssets.cal "w-4 h-4 m4-1"
-                , text <| Utils.formatDate Time.utc note.createdAt
-                ]
-            ]
         , div [ class "mt-2 text-sm flex flex-wrap gap-2" ] <|
             List.map viewTag note.tags
         ]

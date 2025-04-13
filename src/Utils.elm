@@ -1,4 +1,4 @@
-module Utils exposing (formatDate, receieve, tagIdsStr, ternery)
+module Utils exposing (formatDate, receieve, tagIdsStr, ternery, diffDays)
 
 import Json.Decode as D exposing (Decoder)
 import Time
@@ -80,3 +80,15 @@ receieve :
     -> Sub msg
 receieve decoder toMsg effect =
     effect (\value -> D.decodeValue decoder value |> toMsg)
+
+
+diffDays : Time.Posix -> Time.Posix -> Int
+diffDays  posix1 posix2 =
+    let
+        millisPerDay =
+            1000 * 60 * 60 * 24
+
+        diffMillis =
+            Time.posixToMillis posix1 - Time.posixToMillis posix2
+    in
+    diffMillis // millisPerDay

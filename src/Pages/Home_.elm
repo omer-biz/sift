@@ -52,6 +52,7 @@ type alias Model =
     , selectedTags : Set Int
     , pins : Dict String Pin
     , today : Time.Posix
+    , hiddenGroup : Set String
     }
 
 
@@ -90,6 +91,7 @@ init query () =
       , selectedTags = Set.fromList selectedTags
       , pins = Dict.empty
       , today = Time.millisToPosix 0
+      , hiddenGroup = Set.empty
       }
     , Effect.batch
         [ Effect.getNotes { search = searchQuery, tags = selectedTags }
@@ -116,6 +118,7 @@ type Msg
     | TogglePins
     | OpenNote Int
     | Today Time.Posix
+    | ToggleGroup String
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -232,6 +235,17 @@ update msg model =
         Today today ->
             ( { model | today = today }, Effect.none )
 
+        ToggleGroup group ->
+            let
+                groups =
+                    if Set.member group model.hiddenGroup then
+                        Set.remove group model.hiddenGroup
+
+                    else
+                        Set.insert group model.hiddenGroup
+            in
+            ( { model | hiddenGroup = groups }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -265,7 +279,7 @@ viewBody : Model -> Html Msg
 viewBody model =
     main_ [ class "" ]
         [ viewTags model.selectedTags model.tags
-        , viewNotes model.today model.notes
+        , viewNotes model
         ]
 
 
@@ -296,6 +310,7 @@ groupNotesByDate today notes =
                 ( existingLabel, existingNotes ) :: rest ->
                     if existingLabel == currentLabel then
                         ( existingLabel, note :: existingNotes ) :: rest
+
                     else
                         ( currentLabel, [ note ] ) :: labeledNotes
     in
@@ -304,21 +319,25 @@ groupNotesByDate today notes =
         |> List.map (\( label, ns ) -> ( label, List.reverse ns ))
 
 
-viewNotes : Time.Posix -> List Note -> Html Msg
-viewNotes today notes =
+viewNotes : Model -> Html Msg
+viewNotes model =
     let
         groups =
-            groupNotesByDate today notes
+            groupNotesByDate model.today model.notes
 
         renderGroup ( label, ns ) =
             div []
-                [ div [ class "mt-2 mb-1 flex items-center gap-2" ]
-                    [ div [ class "text-md flex items-center text-gray-500 dark:text-gray-400 text-sm min-w-32 gap-x-1" ]
+                [ button [ onClick <| ToggleGroup label, class "mt-2 mb-2 flex items-center gap-2" ]
+                    [ div [ class "text-[17px] flex items-center text-gray-900 dark:text-gray-400 text-sm min-w-32 gap-x-1" ]
                         [ SvgAssets.cal "w-6 h-6 m4-1"
                         , text label
                         ]
                     ]
-                , div [ class "space-y-3" ] <| List.map viewNote ns
+                , if Set.member label model.hiddenGroup then
+                    text ""
+
+                  else
+                    div [ class "space-y-3" ] <| List.map viewNote ns
                 ]
     in
     div [ class "mt-2 pt-0 pb-4 space-y-4 mx-4" ] <| List.map renderGroup groups

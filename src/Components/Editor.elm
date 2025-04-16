@@ -3,14 +3,13 @@ module Components.Editor exposing (Model, Msg(..), init, new, subscriptions, upd
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
-import Html.Attributes exposing (class, placeholder, type_, value)
+import Html.Attributes exposing (class, id, placeholder, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onSubmit)
 import Json.Decode as D
 import Time
 import Types.Note exposing (Note)
 import Types.Tag as Tag exposing (Tag)
 import Utils
-import Html.Attributes exposing (id)
 
 
 type Editor msg
@@ -45,12 +44,21 @@ newNote =
 
 type alias Model =
     { note : Note
+    -- TODO: fix redundent tags
+    -- the editor component needs a huge refactor
+    -- maybe remove the note field and use Maybe Int for the id
     , tagQuery : String
     , tagSugg : List Tag
     , tags : Dict Int Tag
     , tagInputFocus : Bool
     , showModal : Bool
+    , selectedColor : String
     }
+
+
+tagColors : List String
+tagColors =
+    [ "violet", "amber", "emerald", "indigo", "pink", "red", "blue", "sky", "green", "purple" ]
 
 
 init : { a | note : Maybe Note } -> Model
@@ -65,6 +73,7 @@ init opts =
     , tags = Dict.fromList <| List.map (\tag -> ( tag.id, tag )) note.tags
     , tagInputFocus = False
     , showModal = False
+    , selectedColor = "violet"
     }
 
 
@@ -78,6 +87,9 @@ type Msg
     | NoOp
     | ActivateModal
     | CloseModal
+    | CreateTag
+    | SelectColor String
+    | TagCreated Int
 
 
 type Field
@@ -168,10 +180,37 @@ update props =
             CloseModal ->
                 ( { model | showModal = False }, Effect.none )
 
+            CreateTag ->
+                let
+                    tag =
+                        { name = model.tagQuery, color = model.selectedColor }
+                in
+                ( model, Effect.createTag tag )
+
+            SelectColor color ->
+                let
+                    _ =
+                        Debug.log "color" color
+                in
+                ( { model | selectedColor = color }, Effect.none )
+
+            TagCreated tagId ->
+                ( { model
+                    | tags =
+                        Dict.insert tagId
+                            { name = model.tagQuery, color = model.selectedColor, id = tagId }
+                            model.tags
+                  }
+                , Effect.none
+                )
+
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Utils.receieve (D.list Tag.decode) GotTags Effect.recTags
+    Sub.batch
+        [ Utils.receieve (D.list Tag.decode) GotTags Effect.recTags
+        , Effect.tagSaved TagCreated
+        ]
 
 
 view : Editor msg -> Html msg
@@ -231,7 +270,13 @@ view (Settings settings) =
                                     , onBlur <| (settings.toMsg << ToggleTagInput) False
                                     ]
                                     []
-                                , button [ class "rounded w-32 text-white-100 bg-blue-200" ] [ text "create tag" ]
+                                , select [ onInput <| settings.toMsg << SelectColor, class "p-2 border border-black-300 dark:border-black-600 rounded-md bg-white-100 dark:bg-black-200 text-black-500 dark:text-white-100 focus:outline-none focus:ring-1 focus:ring-blue-300" ] <|
+                                    List.map (\options -> option [] [ text options ]) tagColors
+                                , button
+                                    [ onClick <| settings.toMsg CreateTag
+                                    , class "rounded w-32 text-white-100 bg-blue-200"
+                                    ]
+                                    [ text "create" ]
                                 ]
                             , viewTagSuggs
                             ]

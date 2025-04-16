@@ -1,8 +1,9 @@
-module Types.Tag exposing (Tag, decode, view)
+module Types.Tag exposing (Tag, decode, view, encodeNew)
 
 import Html
 import Html.Attributes as Attr
 import Json.Decode as D
+import Json.Encode as E
 
 
 type alias Tag =
@@ -17,7 +18,7 @@ decode =
         (D.field "color" D.string)
 
 
-view : String ->  Tag -> Html.Html msg
+view : String -> Tag -> Html.Html msg
 view style tag =
     let
         styleTag =
@@ -25,9 +26,21 @@ view style tag =
     in
     Html.span
         [ String.join " "
-            [ if style == "" then "text-xs px-2 py-[3px] rounded-md" else style
+            [ if style == "" then
+                "text-xs px-2 py-[3px] rounded-md"
+
+              else
+                style
             , styleTag
             ]
             |> Attr.class
         ]
         [ Html.text <| "#" ++ tag.name ]
+
+
+encodeNew  : { a | name : String, color : String } -> E.Value
+encodeNew tag =
+    E.object
+        [ ( "name", E.string tag.name )
+        , ( "color", E.string tag.color )
+        ]

@@ -53,6 +53,20 @@ async function createNote(db, newNote) {
   return db.notes.add(newNote);
 }
 
+async function createTag(db, newTag) {
+  const existing = await db.tags
+    .where("[name+color]")
+    .equals([newTag.name, newTag.color])
+    .first();
+
+  if (existing) {
+    return existing;
+  }
+
+  const id = await db.tags.add(newTag);
+  return { id, ...newTag };
+}
+
 async function deleteNote(db, noteId) {
   return db.notes.delete(noteId);
 }
@@ -99,7 +113,7 @@ async function deletePin(db, pinId) {
 
 db.version(1).stores({
   notes: "++id, title, content, createdAt, updatedAt, tagIds",
-  tags: "++id, name, color",
+  tags: "++id, [name+color]",
   pins: "++id, tagIds, searchQuery, noteCount",
 });
 
@@ -139,7 +153,6 @@ export const onReady = ({ app, env }) => {
 
         case "GET_NOTE":
           let note = await getNote(db, data);
-          console.log("note", note);
           app.ports.recNote.send(note);
           return;
 
@@ -156,9 +169,16 @@ export const onReady = ({ app, env }) => {
         case "DELETE_NOTE":
           await deleteNote(db, data);
           return;
+
         case "GET_TAGS":
           let tags = await getTags(db, data);
           app.ports.recTags.send(tags);
+          return;
+
+        case "CREATE_TAG":
+          console.log(data);
+          let tag = await createTag(db, data);
+          app.ports.tagSaved.send(tag.id);
           return;
 
         case "GET_PINS":

@@ -5,7 +5,9 @@ port module Effect exposing
     , pushRoute, replaceRoute
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
-    , map, toCmd , createNote, createPin, deleteNote, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme
+    , map, toCmd
+    , createNote, createPin, createTag, deleteNote, getNote, getNotes,
+        getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme, tagSaved
     )
 
 {-|
@@ -34,6 +36,7 @@ import Task
 import Time
 import Types.Note as Note
 import Types.Pin as Pin exposing (Pin)
+import Types.Tag as Tag
 import Url exposing (Url)
 import Utils
 
@@ -355,6 +358,14 @@ createNote note =
         }
 
 
+createTag : { name : String, color : String } -> Effect msg
+createTag tag =
+    SendMessageToJavaScript
+        { tag = "CREATE_TAG"
+        , data = Tag.encodeNew tag
+        }
+
+
 port recNotes : (E.Value -> msg) -> Sub msg
 
 
@@ -371,3 +382,6 @@ port recPin : (E.Value -> msg) -> Sub msg
 
 
 port noteSaved : (Int -> msg) -> Sub msg
+
+
+port tagSaved : (Int -> msg) -> Sub msg

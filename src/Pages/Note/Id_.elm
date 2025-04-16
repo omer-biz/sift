@@ -3,6 +3,7 @@ module Pages.Note.Id_ exposing (Model, Msg, page)
 import Browser.Dom as Dom exposing (focus)
 import Components.Editor as Editor
 import Components.Title as Title
+import Dict
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -119,6 +120,7 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Effect.none )
+
         ToggleContextMenu ->
             ( { model | showOptions = not model.showOptions }, Effect.none )
 
@@ -140,7 +142,13 @@ update msg model =
         SaveNote note ->
             let
                 timedNote =
-                    { note | updatedAt = model.time }
+                    { note
+                        | updatedAt = model.time
+                        , tags =
+                            model.editor.tags
+                                |> Dict.toList
+                                |> List.map Tuple.second
+                    }
             in
             ( { model | saveState = Saving, showOptions = False }, Effect.saveNote timedNote )
 

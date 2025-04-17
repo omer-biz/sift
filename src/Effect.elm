@@ -6,8 +6,7 @@ port module Effect exposing
     , pushRoutePath, replaceRoutePath
     , loadExternalUrl, back
     , map, toCmd
-    , createNote, createPin, createTag, deleteNote, getNote, getNotes,
-        getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme, tagSaved
+    , createNote, createPin, createTag, deleteNote, getNote, getNotes, getPins, getTags, noteSaved, pushToRoute, recNote, recNotes, recPin, recPins, recTags, removePin, saveNote, savePins, sendSharedMsg, switchTheme, tagSaved
     )
 
 {-|
@@ -347,8 +346,6 @@ createNote :
         | title : String
         , content : String
         , tags : List { b | id : Int }
-        , createdAt : Time.Posix
-        , updatedAt : Time.Posix
     }
     -> Effect msg
 createNote note =
@@ -384,4 +381,4 @@ port recPin : (E.Value -> msg) -> Sub msg
 port noteSaved : (Int -> msg) -> Sub msg
 
 
-port tagSaved : (Int -> msg) -> Sub msg
+port tagSaved : (E.Value -> msg) -> Sub msg

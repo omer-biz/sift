@@ -36,12 +36,13 @@ toLayout model =
         { header =
             div [ class "flex w-full" ]
                 [ Title.view
-                    { note = model.editor.note
+                    { title = model.title
                     , onInput = UpdateTitle
+                    , createdAt = Nothing
                     }
                 , div [ class "flex items-center gap-x-3" ]
                     [ button
-                        [ onClick <| CreateNote model.editor.note
+                        [ onClick CreateNote
                         , class "text-white-100 bg-green-300 rounded-xl px-3 py-1 text-xl"
                         ]
                         [ text "create" ]
@@ -55,35 +56,16 @@ toLayout model =
 
 
 type alias Model =
-    { note : Note
-    , tagQuery : String
-    , tagSugg : List Tag
-    , tags : Dict Int Tag
-    , tagInput : Bool
+    { title : String
     , editor : Editor.Model
     , time : Time.Posix
     }
 
 
-newNote : Note
-newNote =
-    { id = 0
-    , title = ""
-    , content = ""
-    , tags = []
-    , createdAt = Time.millisToPosix 0
-    , updatedAt = Time.millisToPosix 0
-    }
-
-
 initModel : Model
 initModel =
-    { note = newNote
-    , tagQuery = ""
-    , tagSugg = []
-    , tags = Dict.empty
-    , tagInput = False
-    , editor = Editor.init { note = Just newNote }
+    { title = ""
+    , editor = Editor.init { content = "", tags = [] }
     , time = Time.millisToPosix 0
     }
 
@@ -101,7 +83,7 @@ init () =
 
 
 type Msg
-    = CreateNote Note
+    = CreateNote
     | EditorSent Editor.Msg
     | UpdateTitle String
     | InitTime Time.Posix
@@ -111,8 +93,11 @@ type Msg
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
-        CreateNote note ->
-            ( model, Effect.createNote note )
+        CreateNote ->
+            ( model
+            , Effect.createNote
+                { title = model.title, tags = model.editor.tags, content = model.editor.content }
+            )
 
         EditorSent innerMsg ->
             Editor.update
@@ -123,24 +108,10 @@ update msg model =
                 }
 
         UpdateTitle title ->
-            let
-                editor =
-                    model.editor
-
-                note =
-                    editor.note
-            in
-            ( { model | editor = { editor | note = { note | title = title } } }, Effect.none )
+            ( { model | title = title }, Effect.none )
 
         InitTime time ->
-            let
-                editor =
-                    model.editor
-
-                note =
-                    editor.note
-            in
-            ( { model | editor = { editor | note = { note | createdAt = time, updatedAt = time } } }, Effect.none )
+            ( { model | time = time }, Effect.none )
 
         NoteCreated id ->
             ( model, Effect.pushRoutePath <| Path.Note_Id_ { id = String.fromInt id } )
@@ -170,7 +141,6 @@ view model =
         [ Editor.new
             { model = model.editor
             , toMsg = EditorSent
-            , onSubmit = CreateNote
             }
             |> Editor.view
         ]

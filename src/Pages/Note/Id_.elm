@@ -1,9 +1,8 @@
 module Pages.Note.Id_ exposing (Model, Msg, page)
 
-import Browser.Dom as Dom exposing (focus)
+import Browser.Dom as Dom
 import Components.Editor as Editor
 import Components.Title as Title
-import Dict
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -14,7 +13,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Shared
 import SvgAssets
-import Task exposing (Task)
+import Task
 import Time exposing (Posix)
 import Types.Note as Note exposing (Note)
 import Utils
@@ -37,10 +36,16 @@ toLayout model =
     Layouts.Scaffold
         { header =
             div [ class "flex w-full" ]
-                [ Title.view
-                    { note = model.editor.note
-                    , onInput = UpdateTitle
-                    }
+                [ case model.note of
+                    Found note ->
+                        Title.view
+                            { title = note.title
+                            , createdAt = Just note.createdAt
+                            , onInput = UpdateTitle
+                            }
+
+                    _ ->
+                        p [] [ text "Not Found" ]
                 , div [ class "flex items-center gap-x-3" ]
                     [ viewSaveState model.saveState
                     , button [ onClick ToggleContextMenu ]
@@ -70,21 +75,10 @@ type NoteState
     | NotFound
 
 
-newNote : Note
-newNote =
-    { id = 0
-    , title = ""
-    , content = ""
-    , tags = []
-    , createdAt = Time.millisToPosix 0
-    , updatedAt = Time.millisToPosix 0
-    }
-
-
 init : String -> () -> ( Model, Effect Msg )
 init noteId () =
     ( { note = Loading
-      , editor = Editor.init <| { note = Just newNote }
+      , editor = Editor.init { content = "", tags = [] }
       , time = Time.millisToPosix 0
       , saveState = Init
       , showOptions = False
@@ -127,7 +121,7 @@ update msg model =
         GotNote (Ok note) ->
             ( { model
                 | note = Found note
-                , editor = Editor.init { note = Just note }
+                , editor = Editor.init note
               }
             , Effect.none
             )
@@ -144,10 +138,7 @@ update msg model =
                 timedNote =
                     { note
                         | updatedAt = model.time
-                        , tags =
-                            model.editor.tags
-                                |> Dict.toList
-                                |> List.map Tuple.second
+                        , tags = model.editor.tags
                     }
             in
             ( { model | saveState = Saving, showOptions = False }, Effect.saveNote timedNote )
@@ -161,14 +152,17 @@ update msg model =
                 }
 
         UpdateTitle title ->
-            let
-                editor =
-                    model.editor
+            ( { model
+                | note =
+                    case model.note of
+                        Found note ->
+                            Found { note | title = title }
 
-                note =
-                    editor.note
-            in
-            ( { model | editor = { editor | note = { note | title = title } } }, Effect.none )
+                        _ ->
+                            model.note
+              }
+            , Effect.none
+            )
 
         GotTime time ->
             ( { model | time = time }, Effect.none )
@@ -220,7 +214,6 @@ view model =
                 [ Editor.new
                     { model = model.editor
                     , toMsg = EditorSent
-                    , onSubmit = SaveNote
                     }
                     |> Editor.view
                 ]
@@ -270,18 +263,23 @@ checkIcon =
 
 viewOptions : Model -> Html Msg
 viewOptions model =
-    div
-        [ class <|
-            if model.showOptions then
-                "absolute  divide-y dark:divide-black-400 top-14 right-8 flex flex-col dark:bg-black-300 rounded"
+    case model.note of
+        Found note ->
+            div
+                [ class <|
+                    if model.showOptions then
+                        "absolute  divide-y dark:divide-black-400 top-14 right-8 flex flex-col dark:bg-black-300 rounded"
 
-            else
-                "hidden"
-        ]
-        [ button
-            [ onClick <| SaveNote model.editor.note, class "px-4 py-2" ]
-            [ text "Save" ]
-        , button
-            [ onClick <| DeleteNote model.editor.note.id, class "px-4 py-2" ]
-            [ text "Delete" ]
-        ]
+                    else
+                        "hidden"
+                ]
+                [ button
+                    [ onClick <| SaveNote note, class "px-4 py-2" ]
+                    [ text "Save" ]
+                , button
+                    [ onClick <| DeleteNote note.id, class "px-4 py-2" ]
+                    [ text "Delete" ]
+                ]
+
+        _ ->
+            text ""

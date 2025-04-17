@@ -50,7 +50,8 @@ async function saveNote(db, note) {
 }
 
 async function createNote(db, newNote) {
-  return db.notes.add(newNote);
+  let now = new Date().toISOString();
+  return db.notes.add({ ...newNote, createdAt: now, updatedAt: now });
 }
 
 async function createTag(db, newTag) {
@@ -176,9 +177,8 @@ export const onReady = ({ app, env }) => {
           return;
 
         case "CREATE_TAG":
-          console.log(data);
           let tag = await createTag(db, data);
-          app.ports.tagSaved.send(tag.id);
+          app.ports.tagSaved.send(tag);
           return;
 
         case "GET_PINS":

@@ -41,14 +41,15 @@ encode note =
 
 
 encodeNew :
-    { a | title : String,
-          content : String, tags : List { b | id : Int }, createdAt : Posix, updatedAt : Posix }
-        -> E.Value
+    { a
+        | title : String
+        , content : String
+        , tags : List { b | id : Int }
+    }
+    -> E.Value
 encodeNew note =
     E.object
         [ ( "title", E.string note.title )
         , ( "content", E.string note.content )
         , ( "tagIds", E.list E.int <| List.map .id note.tags )
-        , ( "createdAt", Iso8601.encode note.createdAt )
-        , ( "updatedAt", Iso8601.encode note.updatedAt )
         ]

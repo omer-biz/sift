@@ -1,13 +1,10 @@
 module Components.Editor exposing (Model, Msg(..), init, new, subscriptions, update, view)
 
-import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, id, placeholder, type_, value)
 import Html.Events exposing (onBlur, onClick, onFocus, onInput, onSubmit)
 import Json.Decode as D
-import Time
-import Types.Note exposing (Note)
 import Types.Tag as Tag exposing (Tag)
 import Utils
 
@@ -16,40 +13,26 @@ type Editor msg
     = Settings
         { model : Model
         , toMsg : Msg -> msg
-        , onSubmit : Note -> msg
         }
 
 
 new :
-    { model : Model, toMsg : Msg -> msg, onSubmit : Note -> msg }
+    { model : Model
+    , toMsg : Msg -> msg
+    }
     -> Editor msg
 new props =
     Settings
         { model = props.model
         , toMsg = props.toMsg
-        , onSubmit = props.onSubmit
         }
 
 
-newNote : Note
-newNote =
-    { id = 0
-    , title = ""
-    , content = ""
-    , tags = []
-    , createdAt = Time.millisToPosix 0
-    , updatedAt = Time.millisToPosix 0
-    }
-
-
 type alias Model =
-    { note : Note
-    -- TODO: fix redundent tags
-    -- the editor component needs a huge refactor
-    -- maybe remove the note field and use Maybe Int for the id
-    , tagQuery : String
+    { content : String
+    , tags : List Tag
     , tagSugg : List Tag
-    , tags : Dict Int Tag
+    , tagQuery : String
     , tagInputFocus : Bool
     , showModal : Bool
     , selectedColor : String
@@ -58,19 +41,16 @@ type alias Model =
 
 tagColors : List String
 tagColors =
+    -- TODO: move this to the store
     [ "violet", "amber", "emerald", "indigo", "pink", "red", "blue", "sky", "green", "purple" ]
 
 
-init : { a | note : Maybe Note } -> Model
+init : { a | content : String, tags : List Tag } -> Model
 init opts =
-    let
-        note =
-            Maybe.withDefault newNote opts.note
-    in
-    { note = note
+    { content = opts.content
+    , tags = opts.tags
     , tagQuery = ""
     , tagSugg = []
-    , tags = Dict.fromList <| List.map (\tag -> ( tag.id, tag )) note.tags
     , tagInputFocus = False
     , showModal = False
     , selectedColor = "violet"
@@ -83,13 +63,11 @@ type Msg
     | AddTagSugg Tag
     | RemoveTag Tag
     | ToggleTagInput Bool
-    | Cancel
     | NoOp
-    | ActivateModal
-    | CloseModal
+    | ToggleModal Bool
     | CreateTag
     | SelectColor String
-    | TagCreated Int
+    | TagCreated (Result D.Error Tag)
 
 
 type Field
@@ -113,16 +91,9 @@ update props =
             ( props.toModel innerModel, effect )
     in
     toParentModel <|
-        let
-            note =
-                model.note
-        in
         case props.msg of
             UpdateField Content value ->
-                ( { model
-                    | note =
-                        { note | content = value }
-                  }
+                ( { model | content = value }
                 , Effect.none
                 )
 
@@ -144,41 +115,28 @@ update props =
                 ( model, Effect.none )
 
             AddTagSugg tag ->
-                let
-                    dictTags =
-                        Dict.insert tag.id tag model.tags
-                in
                 ( { model
                     | tagQuery = ""
-                    , tags = dictTags
-                    , note =
-                        { note
-                            | tags =
-                                dictTags
-                                    |> Dict.toList
-                                    |> List.map Tuple.second
-                        }
+                    , tags = tag :: model.tags
                   }
                 , Effect.none
                 )
 
             RemoveTag tag ->
-                ( { model | tags = Dict.remove tag.id model.tags }, Effect.none )
+                ( { model | tags = List.filter (\t -> t.id /= tag.id) model.tags }
+                , Effect.none
+                )
 
             ToggleTagInput value ->
                 ( { model | tagInputFocus = value }, Effect.none )
 
-            Cancel ->
-                ( model, Effect.back )
-
             NoOp ->
                 ( model, Effect.none )
 
-            ActivateModal ->
-                ( { model | showModal = True }, Effect.none )
 
-            CloseModal ->
-                ( { model | showModal = False }, Effect.none )
+            ToggleModal value ->
+                ( { model | showModal = value }, Effect.none )
+
 
             CreateTag ->
                 let
@@ -194,22 +152,22 @@ update props =
                 in
                 ( { model | selectedColor = color }, Effect.none )
 
-            TagCreated tagId ->
-                ( { model
-                    | tags =
-                        Dict.insert tagId
-                            { name = model.tagQuery, color = model.selectedColor, id = tagId }
-                            model.tags
-                  }
-                , Effect.none
-                )
+            TagCreated (Ok tag) ->
+                ( { model | tags = tag :: model.tags }, Effect.none )
+
+            TagCreated (Err err) ->
+                let
+                    _ =
+                        Debug.log "tag creation error" err
+                in
+                ( model, Effect.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
         [ Utils.receieve (D.list Tag.decode) GotTags Effect.recTags
-        , Effect.tagSaved TagCreated
+        , Utils.receieve Tag.decode TagCreated Effect.tagSaved
         ]
 
 
@@ -218,9 +176,6 @@ view (Settings settings) =
     let
         model =
             settings.model
-
-        note =
-            model.note
 
         viewTagSuggs =
             let
@@ -241,22 +196,17 @@ view (Settings settings) =
             else
                 text ""
 
+        viewTags : List Tag -> List (Html msg)
         viewTags tags =
-            if not <| Dict.isEmpty tags then
-                let
-                    listTags =
-                        tags
-                            |> Dict.toList
-                            |> List.map Tuple.second
-                in
-                List.map (\tag -> button [ onClick <| (settings.toMsg << RemoveTag) tag ] [ Tag.view " text-md p-1 px-2 rounded-xl" tag ]) listTags
+            if not <| List.isEmpty tags then
+                List.map (\tag -> button [ onClick <| (settings.toMsg << RemoveTag) tag ] [ Tag.view " text-md p-1 px-2 rounded-xl" tag ]) tags
 
             else
                 []
 
         viewModal =
             if model.showModal then
-                div [ onClick (settings.toMsg CloseModal), class "fixed inset-0 z-50 bg-[#181818]/50 flex items-center justify-center" ]
+                div [ onClick (settings.toMsg <| ToggleModal False), class "fixed inset-0 z-50 bg-[#181818]/50 flex items-center justify-center" ]
                     [ div [ Utils.onclk <| settings.toMsg NoOp, class "bg-white-300 dark:bg-black-400 rounded-2xl shadow-xl w-full max-w-md p-6 relative h-96 space-y-4" ]
                         [ div [ class "" ]
                             [ div [ class "flex gap-x-2" ]
@@ -292,7 +242,7 @@ view (Settings settings) =
               fieldset []
                 [ div [ class "flex flex-wrap gap-2 items-center my-2 px-4" ] <|
                     button
-                        [ onClick (settings.toMsg ActivateModal)
+                        [ onClick (settings.toMsg <| ToggleModal True)
                         , class "bg-blue-100 hover:bg-blue-200 rounded-2xl shadow px-2 py-1 text-white-100"
                         ]
                         [ text "+ add tag" ]
@@ -306,7 +256,7 @@ view (Settings settings) =
                     , class "w-full bg-white-200 p-4 flex-grow dark:bg-black-400 dark:text-white-100 h-full focus:outline-none"
                     , placeholder "Write your note here..."
                     , onInput <| (settings.toMsg << UpdateField Content)
-                    , value note.content
+                    , value model.content
                     ]
                     []
                 ]

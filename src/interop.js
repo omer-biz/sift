@@ -112,8 +112,20 @@ async function deletePin(db, pinId) {
   return db.pins.delete(pinId);
 }
 
+async function collectTags(db) {
+  const tags = await db.tags.toArray();
+
+  for (const tag of tags) {
+    const count = await db.notes.where("tagIds").anyOf(tag.id).count();
+
+    if (count === 0) {
+      await db.tags.delete(tag.id);
+    }
+  }
+}
+
 db.version(1).stores({
-  notes: "++id, title, content, createdAt, updatedAt, tagIds",
+  notes: "++id, title, content, createdAt, updatedAt, *tagIds",
   tags: "++id, [name+color]",
   pins: "++id, tagIds, searchQuery, noteCount",
 });
@@ -140,6 +152,7 @@ export const flags = ({ env }) => {
 export const onReady = ({ app, env }) => {
   if (app.ports && app.ports.outgoing) {
     app.ports.outgoing.subscribe(async ({ tag, data }) => {
+      collectTags(db);
       switch (tag) {
         case "SWITCH_THEME":
           if (data == "light" || data == "dark") localStorage.theme = data;

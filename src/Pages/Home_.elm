@@ -53,6 +53,7 @@ type alias Model =
     , pins : Dict String Pin
     , today : Time.Posix
     , hiddenGroup : Set String
+    , lastError : Maybe D.Error
     }
 
 
@@ -92,6 +93,7 @@ init query () =
       , pins = Dict.empty
       , today = Time.millisToPosix 0
       , hiddenGroup = Set.empty
+      , lastError = Nothing
       }
     , Effect.batch
         [ Effect.getNotes { search = searchQuery, tags = selectedTags }
@@ -119,11 +121,15 @@ type Msg
     | OpenNote Int
     | Today Time.Posix
     | ToggleGroup String
+    | ClearError
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
+        ClearError ->
+            ( { model | lastError = Nothing }, Effect.none )
+
         SearchQuery value ->
             ( { model | searchQuery = value }
             , Effect.batch
@@ -136,11 +142,7 @@ update msg model =
             ( { model | notes = notes }, Effect.none )
 
         GotNotes (Err err) ->
-            let
-                _ =
-                    Debug.log "decode notes error: " err
-            in
-            ( model, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         GotPin (Ok pin) ->
             let
@@ -150,21 +152,13 @@ update msg model =
             ( { model | pins = Dict.insert pinKey pin model.pins }, Effect.none )
 
         GotPin (Err err) ->
-            let
-                _ =
-                    Debug.log "decode pin error: " err
-            in
-            ( model, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         GotTags (Ok tags) ->
             ( { model | tags = tags }, Effect.none )
 
         GotTags (Err err) ->
-            let
-                _ =
-                    Debug.log "decode tags error: " err
-            in
-            ( model, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         GotPins (Ok pins) ->
             let
@@ -181,11 +175,7 @@ update msg model =
             ( { model | pins = dictPins }, Effect.none )
 
         GotPins (Err err) ->
-            let
-                _ =
-                    Debug.log "decode pins error: " err
-            in
-            ( model, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         ToggleTag id ->
             let
@@ -271,8 +261,30 @@ view model =
     , body =
         [ viewBody model
         , viewFAB
+        , viewErrorModal model.lastError
         ]
     }
+
+
+viewErrorModal : Maybe D.Error -> Html Msg
+viewErrorModal lastError =
+    case lastError of
+        Just error ->
+            div
+                [ class "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 " ]
+                [ div
+                    [ class "bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4 border border-black-400" ]
+                    [ p [ class "text-red-600 mb-4" ] [ text <| D.errorToString error ]
+                    , button
+                        [ class "mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-white-100 rounded"
+                        , onClick ClearError
+                        ]
+                        [ text "Close" ]
+                    ]
+                ]
+
+        Nothing ->
+            text ""
 
 
 viewBody : Model -> Html Msg

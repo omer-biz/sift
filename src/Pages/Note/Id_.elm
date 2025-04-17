@@ -2,6 +2,7 @@ module Pages.Note.Id_ exposing (Model, Msg, page)
 
 import Browser.Dom as Dom
 import Components.Editor as Editor
+import Components.Error as Error
 import Components.Title as Title
 import Effect exposing (Effect)
 import Html exposing (..)
@@ -66,6 +67,7 @@ type alias Model =
     , time : Posix
     , saveState : SaveState
     , showOptions : Bool
+    , lastError : Maybe D.Error
     }
 
 
@@ -82,6 +84,7 @@ init noteId () =
       , time = Time.millisToPosix 0
       , saveState = Init
       , showOptions = False
+      , lastError = Nothing
       }
     , Effect.batch
         [ Effect.getNote noteId
@@ -107,6 +110,7 @@ type Msg
     | NoteSaved
     | DeleteNote Int
     | NoOp
+    | ClearError
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -127,11 +131,7 @@ update msg model =
             )
 
         GotNote (Err err) ->
-            let
-                _ =
-                    Debug.log "note error " err
-            in
-            ( { model | note = NotFound }, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         SaveNote note ->
             let
@@ -180,6 +180,9 @@ update msg model =
                 ]
             )
 
+        ClearError ->
+            ( { model | lastError = Nothing }, Effect.none )
+
 
 
 -- SUBSCRIPTIONS
@@ -216,6 +219,7 @@ view model =
                     , toMsg = EditorSent
                     }
                     |> Editor.view
+                , Error.view { lastError = model.lastError, onClear = ClearError }
                 ]
             }
 

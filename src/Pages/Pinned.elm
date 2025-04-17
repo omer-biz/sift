@@ -16,6 +16,7 @@ import Types.Pin as Pin exposing (Pin)
 import Types.Tag as Tag
 import Utils
 import View exposing (View)
+import Components.Error as Error
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -40,12 +41,13 @@ toLayout model =
 
 type alias Model =
     { pins : List Pin
+    , lastError : Maybe D.Error
     }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( { pins = [] }
+    ( { pins = [], lastError = Nothing }
     , Effect.getPins
     )
 
@@ -59,6 +61,7 @@ type Msg
     | Delete Pin
     | FilterNotes Pin
     | NoOp
+    | ClearError
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -73,11 +76,7 @@ update msg model =
             )
 
         GotPins (Err err) ->
-            let
-                _ =
-                    Debug.log "pin decode error: " err
-            in
-            ( model, Effect.none )
+            ( { model | lastError = Just err }, Effect.none )
 
         Delete pin ->
             ( { model
@@ -90,8 +89,12 @@ update msg model =
         FilterNotes pin ->
             ( model
             , Effect.pushToRoute
-                  (List.map .id pin.tags) pin.searchQuery
+                (List.map .id pin.tags)
+                pin.searchQuery
             )
+
+        ClearError ->
+            ( { model | lastError = Nothing }, Effect.none )
 
 
 
@@ -110,7 +113,10 @@ subscriptions _ =
 view : Model -> View Msg
 view model =
     { title = "Pinned Searches"
-    , body = [ viewPins model.pins ]
+    , body =
+        [ viewPins model.pins
+        , Error.view { lastError = model.lastError, onClear = ClearError }
+        ]
     }
 
 

@@ -1,5 +1,6 @@
 module Components.Editor exposing (Model, Msg(..), init, new, subscriptions, update, view)
 
+import Components.Error as Error
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, id, placeholder, type_, value)
@@ -36,6 +37,7 @@ type alias Model =
     , tagInputFocus : Bool
     , showModal : Bool
     , selectedColor : String
+    , lastError : Maybe D.Error
     }
 
 
@@ -54,6 +56,7 @@ init opts =
     , tagInputFocus = False
     , showModal = False
     , selectedColor = "violet"
+    , lastError = Nothing
     }
 
 
@@ -68,6 +71,7 @@ type Msg
     | CreateTag
     | SelectColor String
     | TagCreated (Result D.Error Tag)
+    | ClearError
 
 
 type Field
@@ -108,11 +112,7 @@ update props =
                 ( { model | tagSugg = tags }, Effect.none )
 
             GotTags (Err err) ->
-                let
-                    _ =
-                        Debug.log "decode tags error: " err
-                in
-                ( model, Effect.none )
+                ( { model | lastError = Just err }, Effect.none )
 
             AddTagSugg tag ->
                 ( { model
@@ -133,10 +133,8 @@ update props =
             NoOp ->
                 ( model, Effect.none )
 
-
             ToggleModal value ->
                 ( { model | showModal = value }, Effect.none )
-
 
             CreateTag ->
                 let
@@ -146,21 +144,16 @@ update props =
                 ( model, Effect.createTag tag )
 
             SelectColor color ->
-                let
-                    _ =
-                        Debug.log "color" color
-                in
                 ( { model | selectedColor = color }, Effect.none )
 
             TagCreated (Ok tag) ->
                 ( { model | tags = tag :: model.tags }, Effect.none )
 
             TagCreated (Err err) ->
-                let
-                    _ =
-                        Debug.log "tag creation error" err
-                in
-                ( model, Effect.none )
+                ( { model | lastError = Just err }, Effect.none )
+
+            ClearError ->
+                ( { model | lastError = Nothing }, Effect.none )
 
 
 subscriptions : Model -> Sub Msg
@@ -262,4 +255,5 @@ view (Settings settings) =
                 ]
             ]
         , viewModal
+        , Error.view { lastError = model.lastError, onClear = settings.toMsg ClearError }
         ]

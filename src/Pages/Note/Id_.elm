@@ -37,10 +37,10 @@ toLayout model =
     Layouts.Scaffold
         { header =
             div [ class "flex w-full" ]
-                [ case model.note of
+                [ case model.noteState of
                     Found note ->
                         Title.view
-                            { title = note.title
+                            { title = model.title
                             , createdAt = Just note.createdAt
                             , onInput = UpdateTitle
                             }
@@ -62,12 +62,15 @@ toLayout model =
 
 
 type alias Model =
-    { note : NoteState
-    , editor : Editor.Model
+    { noteState : NoteState
     , time : Posix
     , saveState : SaveState
     , showOptions : Bool
     , lastError : Maybe D.Error
+
+    -- note content
+    , title : String
+    , editor : Editor.Model
     }
 
 
@@ -79,7 +82,8 @@ type NoteState
 
 init : String -> () -> ( Model, Effect Msg )
 init noteId () =
-    ( { note = Loading
+    ( { noteState = Loading
+      , title = ""
       , editor = Editor.init { content = "", tags = [] }
       , time = Time.millisToPosix 0
       , saveState = Init
@@ -124,7 +128,8 @@ update msg model =
 
         GotNote (Ok note) ->
             ( { model
-                | note = Found note
+                | noteState = Found note
+                , title = note.title
                 , editor = Editor.init note
               }
             , Effect.none
@@ -139,6 +144,8 @@ update msg model =
                     { note
                         | updatedAt = model.time
                         , tags = model.editor.tags
+                        , title = model.title
+                        , content = model.editor.content
                     }
             in
             ( { model | saveState = Saving, showOptions = False }, Effect.saveNote timedNote )
@@ -152,15 +159,7 @@ update msg model =
                 }
 
         UpdateTitle title ->
-            ( { model
-                | note =
-                    case model.note of
-                        Found note ->
-                            Found { note | title = title }
-
-                        _ ->
-                            model.note
-              }
+            ( { model | title = title }
             , Effect.none
             )
 
@@ -205,7 +204,7 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
-    case model.note of
+    case model.noteState of
         NotFound ->
             { title = "note not found"
             , body = [ text "not with that id is not found" ]
@@ -267,7 +266,7 @@ checkIcon =
 
 viewOptions : Model -> Html Msg
 viewOptions model =
-    case model.note of
+    case model.noteState of
         Found note ->
             div
                 [ class <|

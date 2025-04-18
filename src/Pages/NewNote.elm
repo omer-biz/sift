@@ -2,7 +2,6 @@ module Pages.NewNote exposing (Model, Msg, page)
 
 import Components.Editor as Editor
 import Components.Title as Title
-import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -12,10 +11,7 @@ import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path as Path
 import Shared
-import Task
 import Time
-import Types.Note exposing (Note)
-import Types.Tag exposing (Tag)
 import View exposing (View)
 
 
@@ -73,8 +69,7 @@ initModel =
 init : () -> ( Model, Effect Msg )
 init () =
     ( initModel
-    , Task.perform InitTime Time.now
-        |> Effect.sendCmd
+    , Effect.none
     )
 
 
@@ -86,7 +81,6 @@ type Msg
     = CreateNote
     | EditorSent Editor.Msg
     | UpdateTitle String
-    | InitTime Time.Posix
     | NoteCreated Int
 
 
@@ -109,9 +103,6 @@ update msg model =
 
         UpdateTitle title ->
             ( { model | title = title }, Effect.none )
-
-        InitTime time ->
-            ( { model | time = time }, Effect.none )
 
         NoteCreated id ->
             ( model, Effect.pushRoutePath <| Path.Note_Id_ { id = String.fromInt id } )

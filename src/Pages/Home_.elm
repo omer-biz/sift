@@ -263,7 +263,7 @@ view model =
         [ viewBody model
         , viewFAB
         , Error.view
-              { lastError = model.lastError, onClear = ClearError }
+            { lastError = model.lastError, onClear = ClearError }
         ]
     }
 
@@ -322,7 +322,11 @@ viewNotes model =
             div []
                 [ button [ onClick <| ToggleGroup label, class "mt-2 mb-2 flex items-center gap-2" ]
                     [ div [ class "text-[17px] flex items-center text-gray-900 dark:text-gray-400 text-sm min-w-32 gap-x-1" ]
-                        [ SvgAssets.cal "w-6 h-6 m4-1"
+                        [ if Set.member label model.hiddenGroup then
+                            SvgAssets.calDownArrow "w-6 h-6 m4-1"
+
+                          else
+                            SvgAssets.calLines "w-6 h-6 m4-1"
                         , text label
                         ]
                     ]

@@ -117,7 +117,12 @@ update props =
             AddTagSugg tag ->
                 ( { model
                     | tagQuery = ""
-                    , tags = tag :: model.tags
+                    , tags =
+                        -- NOTE: if the tags are small this is fine
+                        -- otherwise move to a Dict
+                        model.tags
+                            |> List.filter (\t -> t.id /= tag.id)
+                            |> (::) tag
                   }
                 , Effect.none
                 )

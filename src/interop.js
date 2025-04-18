@@ -38,6 +38,7 @@ async function getNote(db, noteId) {
 
   if (note != undefined) {
     let tags = await db.tags.bulkGet(note.tagIds);
+    tags = tags.filter((t) => t != undefined);
     return { ...note, tags: tags };
   }
 
@@ -150,9 +151,9 @@ export const flags = ({ env }) => {
 };
 
 export const onReady = ({ app, env }) => {
+  collectTags(db);
   if (app.ports && app.ports.outgoing) {
     app.ports.outgoing.subscribe(async ({ tag, data }) => {
-      collectTags(db);
       switch (tag) {
         case "SWITCH_THEME":
           if (data == "light" || data == "dark") localStorage.theme = data;

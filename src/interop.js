@@ -1,6 +1,7 @@
 import "./app.css";
 import * as seeder from "./interop/seeder.js";
 import Dexie from "dexie";
+import "./interop/content_editor.js";
 
 const db = new Dexie("SiftDB");
 
@@ -159,6 +160,10 @@ export const onReady = ({ app, env }) => {
           if (data == "light" || data == "dark") localStorage.theme = data;
           else localStorage.removeItem("theme");
           toggleDarkMode();
+          let contentEditor = document.querySelector("content-editor");
+          if (contentEditor) {
+            contentEditor.updateTheme();
+          }
           return;
 
         case "GET_NOTES":

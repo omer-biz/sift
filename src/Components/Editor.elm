@@ -3,9 +3,10 @@ module Components.Editor exposing (Model, Msg(..), init, new, subscriptions, upd
 import Components.Error as Error
 import Effect exposing (Effect)
 import Html exposing (..)
-import Html.Attributes exposing (class, id, placeholder, type_, value)
-import Html.Events exposing (onBlur, onClick, onFocus, onInput, onSubmit)
+import Html.Attributes exposing (class, placeholder, property, type_, value)
+import Html.Events as Events exposing (onBlur, onClick, onFocus, onInput, onSubmit)
 import Json.Decode as D
+import Json.Encode as E
 import Types.Tag as Tag exposing (Tag)
 import Utils
 
@@ -249,16 +250,23 @@ view (Settings settings) =
 
             -- note body
             , fieldset [ class " h-screen dark:border-gray-700 flex-grow flex flex-col" ]
-                [ textarea
-                    [ id "note-content-editor"
-                    , class "w-full bg-white-200 p-4 flex-grow dark:bg-black-400 dark:text-white-100 h-full focus:outline-none"
-                    , placeholder "Write your note here..."
-                    , onInput <| (settings.toMsg << UpdateField Content)
-                    , value model.content
-                    ]
-                    []
+                [ viewContentEditor
+                    { content = model.content
+                    , onInput = settings.toMsg << UpdateField Content
+                    }
                 ]
             ]
         , viewModal
         , Error.view { lastError = model.lastError, onClear = settings.toMsg ClearError }
         ]
+
+
+viewContentEditor : { content : String, onInput : String -> msg } -> Html msg
+viewContentEditor opts =
+    node "content-editor"
+        [ property "editorValue" <| E.string opts.content
+        , Events.on "editorChanged" <|
+            D.map opts.onInput <|
+                D.at [ "target", "editorValue" ] D.string
+        ]
+        []

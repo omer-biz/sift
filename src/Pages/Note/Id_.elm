@@ -271,7 +271,7 @@ viewOptions model =
             div
                 [ class <|
                     if model.showOptions then
-                        "absolute  divide-y dark:divide-black-400 top-14 right-8 flex flex-col dark:bg-black-300 rounded"
+                        "absolute z-50 divide-y dark:divide-black-400 top-14 right-8 flex flex-col dark:bg-black-300 rounded"
 
                     else
                         "hidden"

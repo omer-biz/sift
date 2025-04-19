@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "dexie": "^4.0.11",
+    "easymde": "^2.20.0",
     "fuse.js": "^7.1.0"
   }
 }

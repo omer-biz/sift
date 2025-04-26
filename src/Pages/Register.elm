@@ -6,10 +6,10 @@ import Html.Attributes exposing (class, placeholder)
 import Html.Events exposing (onClick)
 import Page exposing (Page)
 import Route exposing (Route)
+import Route.Path as Path
 import Shared
 import SvgAssets
 import View exposing (View)
-import Route.Path as Path
 
 
 page : Shared.Model -> Route () -> Page Model Msg
@@ -27,12 +27,18 @@ page shared route =
 
 
 type alias Model =
-    {}
+    { email : String
+    , password : String
+    , passwordConfirm : String
+    }
 
 
 init : () -> ( Model, Effect Msg )
 init () =
-    ( {}
+    ( { email = ""
+      , password = ""
+      , passwordConfirm = ""
+      }
     , Effect.none
     )
 
@@ -43,7 +49,14 @@ init () =
 
 type Msg
     = NoOp
+    | UpdateField Field String
     | GoBack
+
+
+type Field
+   = Password
+   | PasswordConfirm
+   | Email
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -57,6 +70,18 @@ update msg model =
         GoBack ->
             ( model, Effect.back )
 
+        UpdateField field value ->
+            ( updateField field value model, Effect.none )
+
+updateField : Field -> String -> Model -> Model
+updateField field value model =
+    case field of
+        Password ->
+            { model | password =  value }
+        PasswordConfirm ->
+            { model | passwordConfirm = value}
+        Email ->
+            { model | email = value }
 
 
 -- SUBSCRIPTIONS

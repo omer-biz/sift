@@ -1,10 +1,12 @@
 module Pages.Register exposing (Model, Msg, page)
 
+import Api
 import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
+import Http
 import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path as Path
@@ -33,6 +35,7 @@ type alias Model =
     , password : String
     , passwordConfirm : String
     , errors : Dict String String
+    , isLoading : Bool
     }
 
 
@@ -42,6 +45,7 @@ init () =
       , password = ""
       , passwordConfirm = ""
       , errors = Dict.empty
+      , isLoading = False
       }
     , Effect.none
     )
@@ -56,6 +60,11 @@ type Msg
     | UpdateField Field String
     | GoBack
     | SubmitForm
+    | GotNewUser (Result Http.Error User)
+
+
+type alias User =
+    { token : String }
 
 
 type Field
@@ -115,14 +124,22 @@ update msg model =
                     validate modelValidator model
                         |> Result.mapError errorToDict
             in
-            ( case validatedForm of
+            case validatedForm of
                 Ok _ ->
-                    { model | errors = Dict.empty }
+                    ( { model | errors = Dict.empty, isLoading = True }
+                    , Effect.sendCmd <|
+                        Api.createUser
+                            { onResponse = GotNewUser
+                            , password = model.password
+                            , email = model.email
+                            }
+                    )
 
                 Err errors ->
-                    { model | errors = errors }
-            , Effect.none
-            )
+                    ( { model | errors = errors }, Effect.none )
+
+        GotNewUser _ ->
+            ( model, Effect.none )
 
 
 updateField : Field -> String -> Model -> Model
@@ -198,7 +215,15 @@ view model =
                 [ viewField model.email Email
                 , viewField model.password Password
                 , viewField model.passwordConfirm PasswordConfirm
-                , button [ onClick SubmitForm, class "w-full rounded-xl bg-blue-200 text-white-100 py-2" ] [ text "Continue" ]
+                , button [ onClick SubmitForm, class "w-full rounded-xl bg-blue-200 text-white-100 py-2 flex items-center justify-center " ]
+                    [ text "Continue"
+
+                    , if model.isLoading then
+                        div [ class "ml-2 animate-spin rounded-full h-5 w-5 border-4 border-white-300 border-t-transparent" ] []
+
+                      else
+                        text ""
+                    ]
                 ]
 
             -- extra

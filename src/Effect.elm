@@ -32,7 +32,6 @@ import Route.Path
 import Shared.Model
 import Shared.Msg
 import Task
-import Time
 import Types.Note as Note
 import Types.Pin as Pin exposing (Pin)
 import Types.Tag as Tag

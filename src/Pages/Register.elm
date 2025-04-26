@@ -1,14 +1,16 @@
 module Pages.Register exposing (Model, Msg, page)
 
+import Dict exposing (Dict)
 import Effect exposing (Effect)
 import Html exposing (..)
-import Html.Attributes exposing (class, placeholder)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, placeholder, type_, value)
+import Html.Events exposing (onClick, onInput)
 import Page exposing (Page)
 import Route exposing (Route)
 import Route.Path as Path
 import Shared
 import SvgAssets
+import Validate exposing (fromErrors, ifBlank, ifInvalidEmail, validate)
 import View exposing (View)
 
 
@@ -30,6 +32,7 @@ type alias Model =
     { email : String
     , password : String
     , passwordConfirm : String
+    , errors : Dict String String
     }
 
 
@@ -38,6 +41,7 @@ init () =
     ( { email = ""
       , password = ""
       , passwordConfirm = ""
+      , errors = Dict.empty
       }
     , Effect.none
     )
@@ -51,12 +55,39 @@ type Msg
     = NoOp
     | UpdateField Field String
     | GoBack
+    | SubmitForm
 
 
 type Field
-   = Password
-   | PasswordConfirm
-   | Email
+    = Password
+    | PasswordConfirm
+    | Email
+
+
+toString : Field -> String
+toString field =
+    case field of
+        Password ->
+            "password"
+
+        PasswordConfirm ->
+            "password confirm"
+
+        Email ->
+            "Email"
+
+
+fromFieldToInputType : Field -> String
+fromFieldToInputType field =
+    case field of
+        Email ->
+            "email"
+
+        Password ->
+            "password"
+
+        PasswordConfirm ->
+            "password"
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -73,15 +104,39 @@ update msg model =
         UpdateField field value ->
             ( updateField field value model, Effect.none )
 
+        SubmitForm ->
+            let
+                errorToDict errors =
+                    errors
+                        |> List.map (Tuple.mapFirst toString)
+                        |> Dict.fromList
+
+                validatedForm =
+                    validate modelValidator model
+                        |> Result.mapError errorToDict
+            in
+            ( case validatedForm of
+                Ok _ ->
+                    { model | errors = Dict.empty }
+
+                Err errors ->
+                    { model | errors = errors }
+            , Effect.none
+            )
+
+
 updateField : Field -> String -> Model -> Model
 updateField field value model =
     case field of
         Password ->
-            { model | password =  value }
+            { model | password = value }
+
         PasswordConfirm ->
-            { model | passwordConfirm = value}
+            { model | passwordConfirm = value }
+
         Email ->
             { model | email = value }
+
 
 
 -- SUBSCRIPTIONS
@@ -98,6 +153,26 @@ subscriptions model =
 
 view : Model -> View Msg
 view model =
+    let
+        viewField : String -> Field -> Html Msg
+        viewField val field =
+            div []
+                [ input
+                    [ class "bg-white-200 w-full px-4 py-2 rounded-xl border border-white-300 focus:outline-none focus:ring-2 focus:ring-green-400"
+                    , placeholder <| toString field
+                    , value val
+                    , onInput <| UpdateField field
+                    , type_ <| fromFieldToInputType field
+                    ]
+                    []
+                , case Dict.get (toString field) model.errors of
+                    Just err ->
+                        span [ class "ml-2 text-red-200" ] [ text err ]
+
+                    Nothing ->
+                        text ""
+                ]
+    in
     { title = "Register | Sift"
     , body =
         [ viewHeader
@@ -120,10 +195,10 @@ view model =
 
             -- email and password
             , div [ class "flex flex-col justify-center gap-y-4 mx-8 mt-4" ]
-                [ div [] [ input [ class "bg-white-200 w-full px-4 py-2 rounded-xl border border-white-300 focus:outline-none focus:ring-2 focus:ring-green-400", placeholder "email" ] [] ]
-                , div [] [ input [ class "bg-white-200 w-full px-4 py-2 rounded-xl border border-white-300 focus:outline-none focus:ring-2 focus:ring-green-400", placeholder "password" ] [] ]
-                , div [] [ input [ class "bg-white-200 w-full px-4 py-2 rounded-xl border border-white-300 focus:outline-none focus:ring-2 focus:ring-green-400", placeholder "password confirm" ] [] ]
-                , button [ class "w-full rounded-xl bg-blue-200 text-white-100 py-2" ] [ text "Continue" ]
+                [ viewField model.email Email
+                , viewField model.password Password
+                , viewField model.passwordConfirm PasswordConfirm
+                , button [ onClick SubmitForm, class "w-full rounded-xl bg-blue-200 text-white-100 py-2" ] [ text "Continue" ]
                 ]
 
             -- extra
@@ -142,3 +217,37 @@ viewHeader =
         [ button [ onClick GoBack, class "m-2" ]
             [ SvgAssets.arrowLeft "w-8 h-8" ]
         ]
+
+
+
+-- validator
+
+
+modelValidator : Validate.Validator ( Field, String ) Model
+modelValidator =
+    Validate.all
+        [ ifBlank .password ( Password, "can't be emtpy" )
+        , ifBlank .passwordConfirm ( PasswordConfirm, "can't be emtpy" )
+        , ifBlank .email ( Email, "can't be emtpy" )
+        , ifInvalidEmail .email (\_ -> ( Email, "please enter a valid email" ))
+        , fromErrors modeltoErrors
+        ]
+
+
+modeltoErrors : Model -> List ( Field, String )
+modeltoErrors model =
+    let
+        passwordLength =
+            String.length model.password
+    in
+    if passwordLength > 32 then
+        [ ( Password, "can't be greater than 32" ) ]
+
+    else if passwordLength < 8 then
+        [ ( Password, "can't be less than 8" ) ]
+
+    else if model.passwordConfirm /= model.password then
+        [ ( PasswordConfirm, "password confirm must match password" ) ]
+
+    else
+        []

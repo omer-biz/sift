@@ -14,10 +14,12 @@
             "elm/svg": "1.0.1",
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "rtfeldman/elm-iso8601-date-strings": "1.1.4"
+            "rtfeldman/elm-iso8601-date-strings": "1.1.4",
+            "rtfeldman/elm-validate": "4.0.2"
         },
         "indirect": {
             "elm/parser": "1.1.0",
+            "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.3"
         }
     },

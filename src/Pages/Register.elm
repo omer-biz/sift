@@ -138,8 +138,11 @@ update msg model =
                 Err errors ->
                     ( { model | errors = errors }, Effect.none )
 
-        GotNewUser _ ->
-            ( model, Effect.none )
+        GotNewUser res ->
+            let
+                _  = Debug.log "res" res
+            in
+            ( { model | isLoading = False } , Effect.none )
 
 
 updateField : Field -> String -> Model -> Model

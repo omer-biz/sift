@@ -10,13 +10,13 @@ createUser :
         | email : String
         , password : String
         , onResponse :
-            Result Http.Error {  token : String }
+            Result Http.Error { token : String }
             -> msg
     }
     -> Cmd msg
 createUser opts =
     Http.post
-        { url = "localhost:3000/api/register"
+        { url = "http://localhost:3000/api/auth/register"
         , body =
             Http.jsonBody <|
                 E.object

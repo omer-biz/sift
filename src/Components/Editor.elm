@@ -250,10 +250,12 @@ view (Settings settings) =
 
             -- note body
             , fieldset [ class " h-screen dark:border-gray-700 flex-grow flex flex-col" ]
-                [ viewContentEditor
-                    { content = model.content
-                    , onInput = settings.toMsg << UpdateField Content
-                    }
+                [ textarea
+                    [ onInput <| settings.toMsg << UpdateField Content
+                    , class "h-full bg-white-100 focus:outline-none p-4 dark:bg-black-400 dark:text-white-100"
+                    , placeholder "Your note here..."
+                    ]
+                    [ text model.content ]
                 ]
             ]
         , viewModal

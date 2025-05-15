@@ -139,9 +139,6 @@ update msg model =
                     ( { model | errors = errors }, Effect.none )
 
         GotNewUser res ->
-            let
-                _  = Debug.log "res" res
-            in
             ( { model | isLoading = False } , Effect.none )
 
 
